@@ -737,21 +737,16 @@ def plot_dispersion(filename,cavity_freq_array,response_freq_array,spectral_matr
     if (to_show_colorbar):
         tickmin = 0
         tickmax = np.max(spectral_matrix)
-        cbaxes = inset_axes(ax,
-                            width="100%",  # width = 5% of parent_bbox width
-                            height="5%",  # height : 50%
-                            loc='lower left',
-                            bbox_to_anchor=(0, 1.1, 1, 1),
-                            bbox_transform=ax.transAxes,
-                            borderpad=0,
-                            )
+        #https://matplotlib.org/3.4.2/gallery/axes_grid1/demo_colorbar_with_inset_locator.html
+        cbaxes = inset_axes(ax,width="100%",height="5%",
+                            loc='lower left',bbox_to_anchor=(0, 1.1, 1, 1),
+                            bbox_transform=ax.transAxes,borderpad=0,)
         if (to_colorbar_norm):
             plt.gcf().subplots_adjust(top=0.83)
             cbar = fig.colorbar(cs, cax=cbaxes, format='%.1f', orientation="horizontal",ticks = [0,1.00])
             cbar.ax.set_xlabel(colorbar_label, labelpad=-15, fontsize=colorbar_fs)
         else:
             cbar = fig.colorbar(cs, cax = cbaxes, format='%.2f',orientation = "horizontal",ticks = [tickmin,tickmax])
-            #cbar.set_ticks([])
             cbar.ax.set_xlabel(colorbar_label,labelpad = -13,fontsize = colorbar_fs)
         cbar.ax.tick_params(labelsize=12)
     if (tight_layout):
