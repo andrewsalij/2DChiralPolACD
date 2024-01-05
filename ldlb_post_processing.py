@@ -57,7 +57,7 @@ def get_lin_abs_anal(spec,dp,e_array,dip_mags,dip_angles,unit_defs = dt.unit_def
     return lin_abs
 
 def get_lin_abs_anal_pert(spec,dp,e_array,dip_mags,unit_defs = dt.unit_defs_base):
-    '''analytic expression in JACS paper (23) '''
+    '''analytic expression in JACS paper https://doi.org/10.1021/jacs.1c06752 (23) '''
     prefactor = dt.ldlb_prefactor_2(dp.epsilon_inf,dp.v,dp.length,unit_defs=unit_defs)
     s_n_array = dip_mags**2*e_array
     s_n_matrix = np.tile(s_n_array, (np.size(spec), 1)).T

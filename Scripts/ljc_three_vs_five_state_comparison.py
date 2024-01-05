@@ -3,7 +3,6 @@ import numpy as np
 import dielectric_tensor as dt
 import ldlb_jaynes_cummings as ljc
 import ldlb_plotting as lp
-import numpy.ma as ma
 import brioullinzonebasefinal as base
 def hamiltonian_three_state_sweep(cav_freq_array,chiral_int_array,coupling,trans_freq):
     e_x_array = np.zeros((3,np.size(cav_freq_array)))

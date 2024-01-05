@@ -84,22 +84,6 @@ class VIB_DRESSING():
         self.huang_rhys = huang_rhys_array
 
 
-#CAM B3LYP Optimization, 6-31 g basis
-energies = np.array([3.2945,3.5038,3.8503,4.2738,4.3353,4.4496,4.6163,4.6640,4.6824,4.7127])
-osc = np.array([.24013,1.96077,.02808,0.1106,.20914,.00509,.05467,.18778,.04686,.22454])
-td = np.array([[.26196,1.70473,-.01732],
-            [-.0723,4.77697,-.13094],
-               [.37666,-.38852,-.06997],
-               [.20022,.19311,.16807],
-               [.62570,-1.25456,-.06037],
-               [-.09496,-.12305,-.15013],
-               [0.05392,.68691,-.09307],
-               [0.07104,1.27993,-.01015],
-               [-.00861,.59724,.22747],
-               [-.35659,1.34743,-.04547]
-            ])
-
-meijer_cam_b3lyp_results = TDDFT_RESULTS(energies,td,osc,"CAM-B3LYP","CAM-B3LYP")
 
 #2017 albano TDDFT
 #B3LYP TDDFT, no geometric optimization, 6-31 g basis
@@ -125,13 +109,6 @@ albano_2017_cam_osc_array_reprod = np.array([2.35609,.2551745580,.2489671694])
 albano_2017_cam_td_array_reprod = np.array([[-5.2487,.3878,.0900],[-1.5039,-.5748,-.1959],[-1.4533,.2070,-.1443]])
 albano_cam_reprod_results = TDDFT_RESULTS(albano_2017_cam_eV_reprod,albano_2017_cam_td_array_reprod,albano_2017_cam_osc_array_reprod,"wB76-D","CAM-B3LYP")
 
-
-#from linear fitting to absorption spectra in wollfs et al 2007
-
-vib_index_array = np.array([0])
-huang_rhys_array = np.array([1.17746])
-vib_dist_array = np.array([.18074])
-opv_vibronic_dressing = VIB_DRESSING(vib_index_array,vib_dist_array,huang_rhys_array)
 
 #lin abs_curve_fitting
 #eV
@@ -194,17 +171,6 @@ vib_index_array = np.array([0])
 huang_rhys_array = np.array([1.06724])
 vib_dist_array = np.array([.15433])
 otp_mon_vibronic_dressing = VIB_DRESSING(vib_index_array,vib_dist_array,huang_rhys_array)
-
-#sc-4 lin abs params--from single vib fitting to ~2.9 eV peak--to return to
-vib_dist = .18619
-vib_modes = np.arange(4)
-vib_osc = dt.vib_spec_osc_str(.87154,vib_modes,.98905)
-sc4_lin_abs_energies_possoin = np.hstack((np.array([2.68137,3.52306,3.68791]),vib_modes*vib_dist+2.87427))
-sc4_lin_abs_intensities_possoin = np.hstack((np.array([.24005,.08140,.13962]),vib_osc))
-
-#congo_red lin_abs params
-congo_red_lin_abs_energies = np.hstack([2.49148,3.60883,5.0875,6.77050])
-congo_red_lin_abs_intensities = np.hstack([.39324,.26651,.18528,.50553])
 
 ##Solved parameters
 ##DEPRECATED

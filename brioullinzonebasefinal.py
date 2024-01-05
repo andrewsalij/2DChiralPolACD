@@ -370,10 +370,6 @@ def brillouin_zone_plot(filename, k_x, k_y, plot_this, k_points, vec_1, vec_2,**
         ax.plot((kp_x[4], kp_x[1]), (kp_y[4], kp_y[1]),color = "black",linewidth = linewidth)
         ax.plot((kp_x[4], kp_x[5]), (kp_y[4], kp_y[5]),color = "black",linewidth = linewidth)
         ax.plot((kp_x[3], kp_x[5]), (kp_y[3], kp_y[5]),color = "black",linewidth = linewidth)
-    #plt.scatter(kp_x,kp_y)
-
-    #draws zoomed-in insets
-    #inset_matrix = [(inset)[x0,y0,xf,yf],(zoom_region)[[x0,y0,xf,yf]]
     if (to_show_axes):
         plt.xlabel("$k_x (a^{-1})$")
         plt.ylabel("$k_y (a^{-1})$")

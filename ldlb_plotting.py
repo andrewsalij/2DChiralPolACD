@@ -7,7 +7,11 @@ import itertools
 import dielectric_tensor as dt
 import python_util as pu
 from matplotlib.ticker import FormatStrFormatter
+from matplotlib.collections import LineCollection
+import matplotlib.cm as cm
 import matplotlib.pylab as pylab
+from matplotlib.patches import Ellipse
+import numpy.ma as ma
 
 def eV_to_color_hex(vals, bounds, color_map="rainbow"):
     cmap = cm.get_cmap(color_map)
@@ -185,13 +189,6 @@ def plot_set(filename, x_axis,y_axis_set,figure = None, axis = None):
         axis.plot(x_axis,y_axis_set[i,:])
     pu.filename_handling(figure,filename)
 
-def segment_buffer(points, buffer_per = .02):
-    diff = points[1:] - points[:-1]
-    buffer = buffer_per * diff
-    points_buffered = buffer + points[1:]
-    return points_buffered
-
-
 def plot_set_colored(filename,x_axis,y_axis_set,y_axis_set_color_values,figure=  None,axis = None,x_label = None,y_label = None,opacity = 1,norm_max =1,norm_min = 0,colorbar_label = "",cmap = 'seismic',**kwargs):
     '''
     Plots a line collection of colored lines according to some color map and value array
@@ -275,7 +272,6 @@ def plot_set_colored(filename,x_axis,y_axis_set,y_axis_set_color_values,figure= 
     if (figure is None):
         figure, axis = plt.subplots()
 
-    from matplotlib.collections import LineCollection
     if (not to_set_x_bounds):
         axis.set_xlim(x_axis.min(), x_axis.max())
     else:
@@ -620,7 +616,6 @@ def plot_triple_set_di_bari(filename,x_axis,y_axis_stack,y_axis_set_color_values
     cb.solids.set(alpha=1)
     pu.filename_handling(figure,filename,dpi= 1000)
 
-from matplotlib import ticker, cm
 def plot_log_manifold(filename,x_linspace,y_linspace,manifold,figure= None,axis = None,x_label = "",y_label = "",cbar_label = ""):
     X, Y = np.meshgrid(x_linspace,y_linspace)
     if (figure is None):
@@ -635,16 +630,12 @@ def plot_log_manifold(filename,x_linspace,y_linspace,manifold,figure= None,axis 
         cbar.set_label(cbar_label)
     pu.filename_handling(figure,filename)
 
-import numpy.ma as ma
-
 def mask_array_by_other_array_condition(array_to_mask,masking,op,op_comparison):
     mask = op(masking, op_comparison)
     if (ma.is_masked(array_to_mask)==True):
         return ma.masked_array(array_to_mask,mask= np.logical_or(~mask,ma.getmask(array_to_mask)))
     else:
         return ma.masked_array(array_to_mask,mask = ~mask)
-
-from matplotlib.patches import Ellipse
 
 def ellipse(xy, width, height, edgecolor="black", facecolor="none", axis=None ):
     """ Adds an ellipse

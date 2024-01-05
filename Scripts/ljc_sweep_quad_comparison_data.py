@@ -3,6 +3,7 @@ import dielectric_tensor as dt
 import ldlb_jaynes_cummings as ljc
 import combinatorics as combo
 import ldlb_plotting as lp
+
 gam_set = np.array([.5,.10,.15])
 vp_set = np.array([35,70])/np.sqrt(2)
 del_energy_set = np.array([1,.5])

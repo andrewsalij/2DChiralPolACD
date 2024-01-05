@@ -1,8 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
-import sys, os
-from matplotlib.ticker import FormatStrFormatter
+
 import matplotlib.pylab as pylab
 suffix = "2pt1eV"
 omega_data = np.real(np.load("chiral_int_e_scan"+suffix+".npy"))

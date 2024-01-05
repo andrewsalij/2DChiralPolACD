@@ -3,9 +3,7 @@ import dielectric_tensor as dt
 import ldlb_jaynes_cummings as ljc
 import ldlb_plotting as lp
 import numpy.ma as ma
-import matplotlib.pyplot as plt
-import brioullinzonebasefinal as base
-from matplotlib.collections import LineCollection
+
 
 '''
 Script for testing arbitrary systems'''

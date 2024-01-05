@@ -8,14 +8,10 @@ import matplotlib.pyplot as plt
 import brioullinzonebasefinal as base
 from matplotlib.collections import LineCollection
 
-
-
 gamma= .1
 gamma_type = "linear"
 non_vib_energies =np.array([2.6,3.99])
 elec_results = my_mock_results = ap.TDDFT_RESULTS(non_vib_energies, None, np.array([.455,.10]), "my_brain", "my_brain")
-
-
 
 beta = .175*np.pi
 dip_angles = np.array([0,beta])
