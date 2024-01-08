@@ -296,6 +296,7 @@ def plot_set_colored(filename,x_axis,y_axis_set,y_axis_set_color_values,figure= 
         y_axis_color_set_interp = ma.filled(y_axis_color_set_interp,np.nan)
         x_axis_interp_with_bounds =np.pad(x_axis_interp,(1,1),'constant',constant_values=(x_axis_interp[0],x_axis_interp[-1]))
         y_axis_set_interp_with_bounds = np.pad(y_axis_set_interp,(1,1),'constant',constant_values=(y_axis_set_interp[0],y_axis_set_interp[-1]))
+        #see https://matplotlib.org/stable/gallery/lines_bars_and_markers/multicolored_line.html
         points = np.array([x_axis_interp_with_bounds, y_axis_set_interp_with_bounds]).T.reshape(-1, 1, 2)
         segments = np.concatenate([((1-draw_buffer)*points[:-2]+points[1:-1])/(2), points[1:-1], (points[2:]+points[1:-1]*(1+draw_buffer))/(2)], axis=1)
         if (i == 0):
