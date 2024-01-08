@@ -298,7 +298,6 @@ def plot_set_colored(filename,x_axis,y_axis_set,y_axis_set_color_values,figure= 
         y_axis_set_interp_with_bounds = np.pad(y_axis_set_interp,(1,1),'constant',constant_values=(y_axis_set_interp[0],y_axis_set_interp[-1]))
         points = np.array([x_axis_interp_with_bounds, y_axis_set_interp_with_bounds]).T.reshape(-1, 1, 2)
         segments = np.concatenate([((1-draw_buffer)*points[:-2]+points[1:-1])/(2), points[1:-1], (points[2:]+points[1:-1]*(1+draw_buffer))/(2)], axis=1)
-
         if (i == 0):
             y_axis_color_set_total = y_axis_color_set_interp
             segments_total = segments
@@ -308,6 +307,7 @@ def plot_set_colored(filename,x_axis,y_axis_set,y_axis_set_color_values,figure= 
     segments_total,y_axis_color_set_total = order_by_absolute(segments_total,y_axis_color_set_total)
     if (norm_style == "exp_tanh"):
         exp =1.5
+        #see https://matplotlib.org/stable/users/explain/colors/colormapnorms.html
         def _forward(x):
             return np.where(x>0,np.tanh(x**exp),np.tanh(-(-x)**exp))
         def _backward(x):
