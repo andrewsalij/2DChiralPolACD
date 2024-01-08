@@ -31,8 +31,7 @@ chiral_semisimple = ljc.chiral_factor_semi_approximate(cav_freq_array,energy_arr
 chiral_semisimple_2 = ljc.chiral_factor_second_semi_approximate(cav_freq_array,energy_array,dip_mags,dielectric_params,dip_angles)
 
 fig, ax = plt.subplots(figsize = (3.3,2.5))
-# inset_1 = ax.inset_axes([.5,.25,.1,.1])
-# inset_2 = ax.inset_axes
+
 ax.plot(cav_freq_array,chiral_int_full[0,:],label = r"$\mu_1$",color ="red")
 ax.plot(cav_freq_array,chiral_semisimple,color = "red",linestyle = "dotted")
 ax.plot(cav_freq_array,chiral_int_full[1,:],label = r"$\mu_2$ ",color = 'blue')
