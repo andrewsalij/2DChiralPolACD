@@ -540,28 +540,29 @@ def solve_bse(raw_system):
     e_X, vec_X = solve_hamiltonian(bse_hamiltonian)
     return e_X, vec_X
 
-def dirac_delta(a,b,**kwargs):
-    '''Simple implementation of peak that approaches the Dirac delta function (in the limit of width->0, it would be so)'''
-    c = .01
+def dirac_delta(spectrum,energy,**kwargs):
+    '''Simple implementation of peak that approaches the Dirac delta function (in the limit of width->0, it would be so).
+    Note: not normalized to 1 (doesn't matter as the polaritonic spectra are normalized in the end)'''
+    sigma = .01
     for key,value in kwargs.items():
         if key == "width":
-            c = value/4.291
-    delta = np.exp(-.5 *((a-b)/c)**2)
+            sigma = value/4.291 #denom is 2*sqrt(2*ln(10)), full width at tenth max
+    delta = np.exp(-.5 *((spectrum-energy)/sigma)**2)
     return delta
 
 def dirac_delta_set(spectrum,energies,width = .01):
     '''For a set of energies, gives a spectrum that models the Dirac delta function for all'''
-    c = width/4.291
+    sigma = width/4.291 #denom is 2*sqrt(2*ln(10))
     spec_set = np.tile(spectrum,(np.size(energies),1)).T
     energy_set = np.tile(energies,(np.size(spectrum),1))
-    delta = np.exp(-.5*(energy_set-spec_set)**2/c**2)
+    delta = np.exp(-.5*(energy_set-spec_set)**2/sigma**2)
     return delta
 def create_linear_absorption(energy_spectrum,energy_array,polarized_momentum_array,bse_solutions_matrix):
     '''energy_spectrum is the input of energies into system, whereas energy_array is the eigenvalues to bse'''
     energy_array = np.array(energy_array)
     p_array = np.array(polarized_momentum_array)
     elem_charge = 1
-    mass = 5.10999e5 # MeV/c^2
+    mass = 5.10999e5 # eV/c^2
     fsc =  0.007297
     a_x_matrix = np.array(bse_solutions_matrix)
     num_states = np.size(a_x_matrix,1)

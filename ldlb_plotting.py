@@ -22,9 +22,7 @@ def eV_to_color_hex(vals, bounds, color_map="rainbow"):
     return hex_array
 
 def plot_dipoles(dipole_matrix, filename="", figure="", axis="",
-                 colors_set=["#FF0000", "#0900FF", "#8800FF", "#0900FF"], bounds=np.array([0, 1]), labels=[],
-
-                 label_positions=np.zeros((100, 2)), **kwargs):
+                 colors_set=["#FF0000", "#0900FF", "#8800FF", "#0900FF"], bounds=np.array([0, 1]), labels=[],label_positions=np.zeros((100, 2)), **kwargs):
     axis_style = "equal"
     label_angle=  False
     for key,value in kwargs.items():
