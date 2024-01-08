@@ -1,8 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib
+from matplotlib.lines import Line2D
 
-import matplotlib.pylab as pylab
 suffix = "2pt1eV"
 omega_data = np.real(np.load("chiral_int_e_scan"+suffix+".npy"))
 gamma_data = np.real(np.load("chiral_int_gamma_scan"+suffix+".npy"))
@@ -14,7 +13,7 @@ w_data = np.real(np.load("chiral_int_w2_scan"+suffix+".npy"))
 fig, ax = plt.subplots(2,2,figsize = (3.46,3.5))
 ax = ax.flatten()
 params = {'xtick.labelsize':7,'ytick.labelsize':7,'axes.labelsize':7}
-pylab.rcParams.update(params)
+plt.rcParams.update(params)
 #omega plot
 shared_line_color = "orange"
 
@@ -89,7 +88,7 @@ for i in range(0,4):
         fig.legend(loc = 'upper center',bbox_to_anchor = (.34,1.01),fontsize = 7)
     if (i == 1):
         linestyles = ["solid","dotted"]
-        lines = [matplotlib.lines.Line2D([0], [0], color="black", linewidth=1, linestyle=linestyle) for linestyle in linestyles]
+        lines = [Line2D([0], [0], color="black", linewidth=1, linestyle=linestyle) for linestyle in linestyles]
         labels = ["Infinite-order","Second-order"]
         fig.legend(lines,labels,loc='upper center', bbox_to_anchor=(.80, 1.01), fontsize=7)
 

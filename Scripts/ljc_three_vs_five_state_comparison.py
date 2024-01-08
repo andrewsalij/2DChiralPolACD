@@ -1,9 +1,10 @@
-
 import numpy as np
 import dielectric_tensor as dt
 import ldlb_jaynes_cummings as ljc
 import ldlb_plotting as lp
 import brioullinzonebasefinal as base
+import matplotlib.pyplot as plt
+
 def hamiltonian_three_state_sweep(cav_freq_array,chiral_int_array,coupling,trans_freq):
     e_x_array = np.zeros((3,np.size(cav_freq_array)))
     a_x_array = np.zeros((3,3,np.size(cav_freq_array)))
@@ -82,7 +83,6 @@ helicity_three_state =ljc.helical_polaritonic_characteristic_v2_from_eigenvecs(a
 
 helicity_five_state = ljc.helical_polaritonic_characteristic_v2_from_eigenvecs(a_x_five_state,five_state_basis,[0,1],[2,3,4],sign_convention="reversed")
 
-import matplotlib.pyplot as plt
 plt.rcParams['xtick.labelsize']=16
 plt.rcParams['ytick.labelsize']=16
 #removing middle (photonic) states from plotting

@@ -1,15 +1,13 @@
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import numpy as np
-import mpl_toolkits.axes_grid1.inset_locator as axis_helper
-from mpl_toolkits.axes_grid1 import make_axes_locatable
+import mpl_toolkits.axes_grid1.inset_locator as inset_locator
 import itertools
 import dielectric_tensor as dt
 import python_util as pu
 from matplotlib.ticker import FormatStrFormatter
 from matplotlib.collections import LineCollection
 import matplotlib.cm as cm
-import matplotlib.pylab as pylab
 from matplotlib.patches import Ellipse
 import numpy.ma as ma
 
@@ -62,11 +60,9 @@ def plot_dipoles(dipole_matrix, filename="", figure="", axis="",
 
 
     if (not (bounds == np.array([0, 1])).all()):
-        divider = make_axes_locatable(axis)
-        cbax = divider.new_vertical(size="5%", pad=0.5, pack_start=True)
-        figure.add_axes(cbax)
+        cbar_ax = figure.add_axes([.05, .05, 0.8, .05])
         norm = colors.Normalize(vmin=np.min(bounds), vmax=np.max(bounds))
-        cbar = figure.colorbar(cm.ScalarMappable(cmap="rainbow", norm=norm), cax=cbax, orientation='horizontal',
+        cbar = figure.colorbar(cm.ScalarMappable(cmap="rainbow", norm=norm), cax=cbar_ax, orientation='horizontal',
                                ticks=bounds)
         cbar.set_label(label="Wavelength (nm)", size=20)
         cbar.ax.tick_params(labelsize=20)
@@ -108,7 +104,8 @@ def spectrum_plot_dipole_inset(filename, spectrum, to_plot, dipole_matrix, dipol
                                figure="", axis="", x_label="", y_label="", style=""):
     if (figure == ""):
         figure, axis = plt.subplots()
-    axis_inset = axis_helper.inset_axes(axis, width="30%", loc=4)
+    #see https://matplotlib.org/stable/gallery/axes_grid1/inset_locator_demo.html
+    axis_inset = inset_locator.inset_axes(axis, width="30%", loc=4)
     dim = to_plot.ndim
     if (dim == 1):
         axis.plt(spectrum, to_plot)
@@ -125,9 +122,6 @@ def spectrum_plot_dipole_inset(filename, spectrum, to_plot, dipole_matrix, dipol
         figure.show()
 
 
-def plot_dipoles_3D(dipoles,labels,dip_axis = 0):
-    if (dip_axis == 1):dipoles = dipoles.T
-    return 0
 #dp is dielectric_params
 def plot_ldlb_orientations(filename,dipole_mat,e_array, spec, second_film_rotation, dp,
                            rot_array = np.array([0,0,0]),rot_array_2 = np.array([0,0,0]),cd_conversion_factor = 1):
@@ -165,15 +159,15 @@ def plot_ldlb_orientations(filename,dipole_mat,e_array, spec, second_film_rotati
     lin_opt_params_2_flip = dt.linear_optics_from_dielectric_tensor(rotated_dielectric_second_film_flip,spec)
     flipped_response = dt.ldlb_two_film_from_params(lin_opt_params_2_flip,lin_opt_params_flip)
 
-    s = dt.eV_to_nm(spec)
+    spec_nm = dt.eV_to_nm(spec)
     fig, ax  = plt.subplots()
 
-    ax.plot(s,ldlb_two_film_response*cd_conversion_factor,label = "LDLB")
-    ax.plot(s,ldlb_two_film_response_rev*cd_conversion_factor,label = "$\phi$ reversed")
-    ax.plot(s,lin_opt_params.ldlb()*cd_conversion_factor,linestyle = "dotted",label = "solo film")
-    ax.plot(s,lin_opt_params_flip.ldlb()*cd_conversion_factor,linestyle = "dotted",label = "solo film flipped")
-    ax.plot(s,(ldlb_two_film_response+flipped_response)/(2)*cd_conversion_factor,linestyle= "dashed",label = "semi-sum")
-    ax.plot(s,flipped_response*cd_conversion_factor,label = "Flipped Apparatus")
+    ax.plot(spec_nm,ldlb_two_film_response*cd_conversion_factor,label = "LDLB")
+    ax.plot(spec_nm,ldlb_two_film_response_rev*cd_conversion_factor,label = "$\phi$ reversed")
+    ax.plot(spec_nm,lin_opt_params.ldlb()*cd_conversion_factor,linestyle = "dotted",label = "solo film")
+    ax.plot(spec_nm,lin_opt_params_flip.ldlb()*cd_conversion_factor,linestyle = "dotted",label = "solo film flipped")
+    ax.plot(spec_nm,(ldlb_two_film_response+flipped_response)/(2)*cd_conversion_factor,linestyle= "dashed",label = "semi-sum")
+    ax.plot(spec_nm,flipped_response*cd_conversion_factor,label = "Flipped Apparatus")
     ax.set_xlabel("Wavelength (nm)")
     ax.set_ylabel("CD")
     ax.legend()
@@ -360,7 +354,7 @@ def plot_double_set_colored_shared_y_axis(filename,x_axis,y_axis_stack,y_axis_se
         if key == "cbar_ticks":
             cbar_ticks= value
     params = {'xtick.labelsize':7,'ytick.labelsize':7,'axes.labelsize':7}
-    pylab.rcParams.update(params)
+    plt.rcParams.update(params)
     if (axis == None):
         figure, axes = plt.subplots(1,2,sharey=True)
     else:
@@ -418,10 +412,6 @@ def axes_tuple_along_axis(axes_in_grid,index,axis = 0):
             axis_list.append(axes_in_grid[index,i])
     return tuple(axis_list)
 
-# fig, axes = plt.subplots(3,2)
-# tuple_axes_1 = axes_tuple_along_axis(axes,0,1)
-# tuple_axes_2 = axes_tuple_along_axis(axes,0,0)
-
 def share_square_axes(axes_in_grid):
     num_rows = np.size(axes_in_grid,axis= 0)
     num_cols = np.size(axes_in_grid,axis =1)
@@ -458,7 +448,7 @@ def plot_quad_set_shared_axes(filename,x_axis,y_axis_stack,y_axis_set_color_valu
             ellipse_matrix = value # matrix of xy, width, height of ellipses
 
     params = {'xtick.labelsize':7,'ytick.labelsize':7,'axes.labelsize':7}
-    pylab.rcParams.update(params)
+    plt.rcParams.update(params)
     if (axis == None):
         figure, axes_grid = plt.subplots(2,2,sharey=True,sharex=True)
         axes = axes_grid.reshape(-1)
@@ -515,12 +505,12 @@ def plot_quad_set_shared_axes(filename,x_axis,y_axis_stack,y_axis_set_color_valu
     plt.gcf().text(0.02,.41,y_label,va='center',ha='center',rotation = 'vertical',fontsize = 7)
     plt.gcf().text(0.02, .81, y_label, va='center', ha='center', rotation='vertical', fontsize=7)
     cbar_ax = figure.add_axes([.15,.09,0.8,.05],)
-    cb = figure.colorbar(lc,cax = cbar_ax,label = colorbar_label,orientation='horizontal',pad = 1)
-    if (cb.vmax == .5 and cb.vmin == -.5):
-        cb.set_ticks([-0.5,-.25, 0.0, .25,0.5])
-        cb.set_ticklabels([-0.5,"",0.0,"",0.5])
-    cb.solids.set(alpha=1)
-    cb.set_label(colorbar_label, fontsize=7,labelpad=  0)
+    cbar = figure.colorbar(lc,cax = cbar_ax,label = colorbar_label,orientation='horizontal',pad = 1)
+    if (cbar.vmax == .5 and cbar.vmin == -.5):
+        cbar.set_ticks([-0.5,-.25, 0.0, .25,0.5])
+        cbar.set_ticklabels([-0.5,"",0.0,"",0.5])
+    cbar.solids.set(alpha=1)
+    cbar.set_label(colorbar_label, fontsize=7,labelpad=  0)
     pu.filename_handling(figure,filename,dpi= 1000)
 
 def plot_triple_set_di_bari(filename,x_axis,y_axis_stack,y_axis_set_color_values_stack,figure=  None,axis = None,x_label = None,y_label = None,opacity = 1,norm_max =1,norm_min = 0,colorbar_label = "",cmap = 'seismic',figsize = (6.6,6.6),**kwargs):
@@ -529,7 +519,7 @@ def plot_triple_set_di_bari(filename,x_axis,y_axis_stack,y_axis_set_color_values
     cbar_style = "horizontal"
     image_panel_b= None
     params = {'xtick.labelsize': 7, 'ytick.labelsize': 7, 'axes.labelsize': 7}
-    pylab.rcParams.update(params)
+    plt.rcParams.update(params)
     for key, value in kwargs.items():
         if key == "show_lines":
             show_dispersion_lines = value
@@ -540,7 +530,7 @@ def plot_triple_set_di_bari(filename,x_axis,y_axis_stack,y_axis_set_color_values
         if key == "image":
             image_panel_b = value
     params = {'xtick.labelsize':7,'ytick.labelsize':7,'axes.labelsize':7}
-    pylab.rcParams.update(params)
+    plt.rcParams.update(params)
     if (axis == None):
         figure, axes_grid = plt.subplots(2,2)
         axes = axes_grid.reshape(-1)
@@ -601,26 +591,26 @@ def plot_triple_set_di_bari(filename,x_axis,y_axis_stack,y_axis_set_color_values
     plt.gcf().text(0.03, .8, y_label, va='center', ha='center', rotation='vertical', fontsize=7)
     if (cbar_style == "horizontal"):
         cbar_ax = figure.add_axes([.15,.10,0.8,.05],)
-        cb = figure.colorbar(lc,cax = cbar_ax,orientation='horizontal')
-        cb.set_label(label = colorbar_label,fontsize= 7,labelpad= 0)
+        cbar = figure.colorbar(lc,cax = cbar_ax,orientation='horizontal')
+        cbar.set_label(label = colorbar_label,fontsize= 7,labelpad= 0)
         figure.subplots_adjust(left=.12, right=0.99, bottom=.24, top=.99)
     elif (cbar_style == "vertical"):
         cbar_ax = figure.add_axes([.8, .1, 0.05, .7], )
-        cb = figure.colorbar(lc, cax=cbar_ax, label=colorbar_label, orientation='vertical')
+        cbar = figure.colorbar(lc, cax=cbar_ax, label=colorbar_label, orientation='vertical')
         figure.subplots_adjust(left=.18, right=0.7, bottom=.13, top=.98)
     else:
         ValueError("Invalid cbar_style")
-    if (cb.vmax == .5 and cb.vmin == -.5):
-        cb.set_ticks([-0.5,-.25, 0.0, .25,0.5])
-        cb.set_ticklabels([-0.5,"",0.0,"",0.5])
-    cb.solids.set(alpha=1)
+    if (cbar.vmax == .5 and cbar.vmin == -.5):
+        cbar.set_ticks([-0.5,-.25, 0.0, .25,0.5])
+        cbar.set_ticklabels([-0.5,"",0.0,"",0.5])
+    cbar.solids.set(alpha=1)
     pu.filename_handling(figure,filename,dpi= 1000)
 
 def plot_log_manifold(filename,x_linspace,y_linspace,manifold,figure= None,axis = None,x_label = "",y_label = "",cbar_label = ""):
-    X, Y = np.meshgrid(x_linspace,y_linspace)
+    x_mesh, y_mesh = np.meshgrid(x_linspace,y_linspace)
     if (figure is None):
         figure, axis = plt.subplots()
-    cs = axis.pcolor(X,Y,manifold, norm=colors.LogNorm(vmin = .1,vmax = 10),cmap = plt.get_cmap("seismic"))
+    cs = axis.pcolor(x_mesh,y_mesh,manifold, norm=colors.LogNorm(vmin = .1,vmax = 10),cmap = plt.get_cmap("seismic"))
     cbar = figure.colorbar(cs)
     if (x_label):
         axis.set_xlabel(x_label)

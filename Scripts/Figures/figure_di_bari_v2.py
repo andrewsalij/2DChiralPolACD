@@ -38,8 +38,8 @@ y_axis_set_color_values_stack = np.stack((helical_pol_t,helical_pol_bot_containe
 if (g_factor_old_style):
     y_axis_set_color_values_stack = y_axis_set_color_values_stack*2
 
-image_vectors_fn = get_sample_data(os.sep.join((os.getcwd(),"vectors_solo_cis.png")), asfileobj=False)
-image_panel_b = plt.imread(image_vectors_fn)
+image_vectors_filename = get_sample_data(os.sep.join((os.getcwd(),"vectors_solo_cis.png")), asfileobj=False)
+image_panel_b = plt.imread(image_vectors_filename)
 filename = "figure_di_bari_comparison_v17.pdf"
 ldlb_plotting.plot_triple_set_di_bari(filename,cav_freq_array_t,y_axis_stack,y_axis_set_color_values_stack,
                                       figure=  None,axis = None,x_label = r"$\Omega$ (eV $\hbar^{-1}$)",y_label = r"$E^\alpha$ (eV)",opacity = 1,norm_max =2,norm_min = -2,

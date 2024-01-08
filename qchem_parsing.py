@@ -1,7 +1,5 @@
 import numpy as np
-import re
 import albano_params as ap
-import python_util
 
 '''
 Transition enegies object for data storage.

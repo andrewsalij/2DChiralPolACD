@@ -3,7 +3,6 @@ import dielectric_tensor as dt
 import ldlb_jaynes_cummings as ljc
 import combinatorics as combo
 import brioullinzonebasefinal as base
-import ldlb_plotting as lp
 set_size  =100
 gam_set = np.linspace(.03,.15,set_size)
 del_energy_set = np.linspace(0,2,set_size)

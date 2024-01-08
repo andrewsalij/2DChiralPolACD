@@ -3,7 +3,6 @@ import numpy as np
 import dielectric_tensor as dt
 import ldlb_jaynes_cummings as ljc
 import ldlb_plotting as lp
-import numpy.ma as ma
 dielectric_params = dt.DIELECTRIC_PARAMS(iso_hf_dielectric_const=8,volume_cell= 5.8075e-7,damping_factor=.1,
                      length=1,gamma_type="linear")
 

@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-import matplotlib.ticker
 import numpy as np
 
 g_factor_old_style = True

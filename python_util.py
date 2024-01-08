@@ -1,7 +1,5 @@
 import numpy as np
-import os
 import re
-import csv
 import pickle
 '''
 Utility functions, primarily for numpy 

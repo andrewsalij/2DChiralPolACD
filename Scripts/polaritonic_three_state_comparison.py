@@ -4,7 +4,7 @@ import dielectric_tensor as dt
 import matplotlib.pyplot as plt
 import ldlb_plotting as lp
 import numpy.ma as ma
-
+import combinatorics as combo
 
 dielectric_params = dt.DIELECTRIC_PARAMS(iso_hf_dielectric_const=2,volume_cell= 5e-8,damping_factor=.08,
                      length=1,gamma_type="linear")
@@ -41,7 +41,7 @@ achiral_int = np.ones(subsize)*achiral_int_set[0]
 
 three_state_polaritons = ljc.THREE_STATE_ANAL_POLARITONS(achiral_int,chiral_factor,detuning)
 
-import combinatorics as combo
+
 full_basis  = combo.construct_organic_basis(2,2)
 phot,lop,up = three_state_polaritons.all_states()
 

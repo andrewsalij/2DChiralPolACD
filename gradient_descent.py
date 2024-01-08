@@ -1,4 +1,3 @@
-import pandas
 import scipy.optimize as op
 import numpy as np
 import dielectric_tensor as dt
@@ -323,15 +322,15 @@ def random_offset_array_to_array(array,offsets,type ="absolute",uniform_offset =
     '''
     n = np.size(array)
     if np.isscalar(offsets): offsets = np.ones(n)*offsets
-    if (uniform_offset): random_array = 2 * (np.random.rand(1) - .5)*np.ones(n)
-    else: random_array = 2 * (np.random.rand(n) - .5)  # -1 to 1, single value
+    if (uniform_offset): random_array = np.random.uniform(-1,1)*np.ones(n)
+    else: random_array = np.random.uniform(-1,1,size=n) # -1 to 1, single value
     if (type =="scale"):offset_array = array*(1+random_array*offsets)
     elif (type == "absolute"):offset_array = random_array*offsets + array
     else:ValueError("Invalid offset type")
     return offset_array
 
 def random_offset_to_scalar(scalar,offset):
-    random_scalar = (2*(np.random.rand(1).item())-.5)*offset
+    random_scalar = np.random.uniform(-1,1)*offset
     return scalar+random_scalar
 
 class Random2DDipoleOrientation():
@@ -341,7 +340,4 @@ class Random2DDipoleOrientation():
         self.dip_energies = random_offset_to_array(dip_energies,energies_offsets)
 
 
-def add_row_array_to_dataframe(dataframe,row_array):
-    '''Takes a pandas DataFrame and adds a numpy row array to it'''
-    dataframe.loc[len(dataframe)] = row_array.tolist()
 

@@ -323,14 +323,15 @@ def euler_rotation_matrix(r_x,r_y,r_z): #note that the transformation is z, then
 
 def axis_angle_to_quaternion(axis_angle_array):
     '''
-
     :param axis_angle_array: ([{x,y,z},theta])
     :return: np.ndarray
     '''
-    a = axis_angle_array
-    b = np.sin(a[3]/2)
-    c = a[:3]/np.linalg.norm(a[:3]) #norm the axis
-    return np.array([b*c[0],b*c[1],b*c[2],np.cos(a[3]/2)])
+    theta = axis_angle_array[3]
+    unit_vec = axis_angle_array[:3]/np.linalg.norm(axis_angle_array[:3])
+    quat_xyz=  np.sin(theta/2)*unit_vec
+    quat_w = np.cos(theta/2)
+    return np.append(quat_xyz,quat_w)
+
 
 def multiply_quaternion(quat_b,quat_a):
     '''

@@ -4,7 +4,7 @@ import dielectric_tensor as dt
 import matplotlib.pyplot as plt
 import ldlb_plotting as lp
 import numpy.ma as ma
-import matplotlib
+
 
 
 dielectric_params = dt.DIELECTRIC_PARAMS(iso_hf_dielectric_const=2,volume_cell= 5e-8,damping_factor=.15,

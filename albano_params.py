@@ -2,7 +2,6 @@ import numpy as np
 import dielectric_tensor as dt
 import python_util
 import gradient_descent as gd
-import python_util as pu
 '''
 Paramterization of Albano's 2017 oligothiophene 
 

@@ -3,8 +3,6 @@ import numpy as np
 import dielectric_tensor as dt
 import matplotlib.pyplot as plt
 
-
-
 dielectric_params = dt.DIELECTRIC_PARAMS(iso_hf_dielectric_const=8,volume_cell= 2e-7,damping_factor=.09,
                      length=1,gamma_type="linear")
 energy_array = np.array([2,3])

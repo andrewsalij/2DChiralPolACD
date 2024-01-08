@@ -372,7 +372,7 @@ def extract_nonelements(init_array,comparison_array):
     '''
     counter_init=  collections.Counter(init_array)
     counter_comp= collections.Counter(comparison_array)
-    return sorted((counter_init-counter_comp).elements())\
+    return sorted((counter_init-counter_comp).elements())
 
 def identity_arbitrary_shape(shape,identity_axes = [0,1]):
     '''
