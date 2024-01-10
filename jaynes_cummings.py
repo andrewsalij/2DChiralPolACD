@@ -905,7 +905,7 @@ def time_dependent_jc_dynamics(e_x_array,a_x_matrix, time_array,m_pol_plus_array
     elif (optical_excitation == "minus"):
          i_plus = time_dependent_probe(p_plus_t_matrix[:,0],p_minus_t_matrix)
          i_minus = time_dependent_probe(p_minus_t_matrix[:,0],p_minus_t_matrix)
-    else: ValueError("Unsupported optical excitation string ('plus' or 'minus' required)")
+    else: raise ValueError("Unsupported optical excitation string ('plus' or 'minus' required)")
     helicity = get_helicity_electronic(i_plus,i_minus)
 
     return i_plus, i_minus ,helicity

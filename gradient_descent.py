@@ -326,7 +326,7 @@ def random_offset_array_to_array(array,offsets,type ="absolute",uniform_offset =
     else: random_array = np.random.uniform(-1,1,size=n) # -1 to 1, single value
     if (type =="scale"):offset_array = array*(1+random_array*offsets)
     elif (type == "absolute"):offset_array = random_array*offsets + array
-    else:ValueError("Invalid offset type")
+    else:raise ValueError("Invalid offset type")
     return offset_array
 
 def random_offset_to_scalar(scalar,offset):

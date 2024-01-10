@@ -361,7 +361,7 @@ def plot_double_set_colored_shared_y_axis(filename,x_axis,y_axis_stack,y_axis_se
             axes = axis
             axes[0].get_shared_y_axes().join(axes[0],axes[1])
         else:
-            ValueError("Double Plot Axis Must Have 2 Axes")
+            raise ValueError("Double Plot Axis Must Have 2 Axes")
     figure.set_size_inches(figsize)
     label_fontsize= 7
 
@@ -456,7 +456,7 @@ def plot_quad_set_shared_axes(filename,x_axis,y_axis_stack,y_axis_set_color_valu
             share_square_axes(axis)
             axes = axis.reshape(-1)
         else:
-            ValueError("Quad Plot Axis Must Have 2 Axes")
+            raise ValueError("Quad Plot Axis Must Have 2 Axes")
     figure.set_size_inches(figsize)
     figure.subplots_adjust(hspace = 0.05)
     figure.subplots_adjust(wspace = 0)
@@ -538,7 +538,7 @@ def plot_triple_set_di_bari(filename,x_axis,y_axis_stack,y_axis_set_color_values
             share_square_axes(axis)
             axes = axis.reshape(-1)
         else:
-            ValueError("Quad Plot Axis Must Have 2 Axes")
+            raise ValueError("Quad Plot Axis Must Have 2 Axes")
     #removing axes--setting axes[1] as off removes image as well
     axes[1].set_xticks([])
     axes[1].set_yticks([])
@@ -598,7 +598,7 @@ def plot_triple_set_di_bari(filename,x_axis,y_axis_stack,y_axis_set_color_values
         cbar = figure.colorbar(lc, cax=cbar_ax, label=colorbar_label, orientation='vertical')
         figure.subplots_adjust(left=.18, right=0.7, bottom=.13, top=.98)
     else:
-        ValueError("Invalid cbar_style")
+        raise ValueError("Invalid cbar_style")
     if (cbar.vmax == .5 and cbar.vmin == -.5):
         cbar.set_ticks([-0.5,-.25, 0.0, .25,0.5])
         cbar.set_ticklabels([-0.5,"",0.0,"",0.5])

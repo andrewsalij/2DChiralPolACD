@@ -44,7 +44,7 @@ def cd_analytic(dielectric_params, energy_array,dipole_mags_array,dipole_angles_
         second_dipole_contrib = v_n*s_n
         spec_to_use = spectrum
     else:
-        ValueError("Either length must be a scalar or a single energy is probed")
+        raise ValueError("Either length must be a scalar or a single energy is probed")
     length_prefactor = a_1 / length
     total_prefactor = length_prefactor * xi ** 2 * spec_to_use** 2
     abs_cd_anal = total_prefactor*np.sum(total_cross_int*second_dipole_contrib,axis = 0)
@@ -281,7 +281,7 @@ def get_chiral_interaction_constants(dipole_matrix,dielectric_params,spectrum,en
         a_1 = brown_params[0][1]
         a_1_at_omega_cav = a_1[cavity_index]
     else:
-        ValueError("Length type error (not scalar or array)")
+        raise ValueError("Length type error (not scalar or array)")
 
     xi = 1 / (unit_defs.hbar * unit_defs.c * unit_defs.e0 * np.sqrt(
         dielectric_params.epsilon_inf) * dielectric_params.v)
@@ -321,7 +321,7 @@ def get_chiral_interaction_constants_set_energy(dipole_matrix,dielectric_params,
         brown_params = brown_params_from_raw_set_energy(dielectric_params, dipole_matrix, energy_array, spectrum, cavity_freq,length,style = style )
         a_1_at_omega_cav = brown_params[0][1]
     else:
-        ValueError("Length type error (not scalar or array)")
+        raise ValueError("Length type error (not scalar or array)")
 
     xi = 1 / (unit_defs.hbar * unit_defs.c * unit_defs.e0 * np.sqrt(
         dielectric_params.epsilon_inf) * dielectric_params.v)
@@ -495,18 +495,18 @@ def check_if_dirac_spectral_hamiltonian(spectral_hamiltonian,energy_array):
 def extract_discrete_hamiltonian_from_spectral_hamiltonian(spectral_hamiltonian,energy_array,spectrum):
     is_dirac = check_if_dirac_spectral_hamiltonian(spectral_hamiltonian,energy_array)
     if (not is_dirac):
-        assert ValueError("Spectral Hamiltonian Must Be in Dirac Delta Form ")
+        raise ValueError("Spectral Hamiltonian Must Be in Dirac Delta Form ")
     else:
         dim = np.ndim(spectral_hamiltonian)
         if (dim >= 3):
-            assert ValueError("Too many dimensions in spectral hamiltonian--only 1D and 2D arrays supported ")
+            raise ValueError("Too many dimensions in spectral hamiltonian--only 1D and 2D arrays supported ")
         if (dim == 2):
             spectral_hamiltonian = np.sum(spectral_hamiltonian,axis= 0)
         nonzero_idx = np.nonzero(spectral_hamiltonian)
         saved_hamiltonian = spectral_hamiltonian[nonzero_idx]
         saved_energies = spectrum[nonzero_idx]
         if (not np.isclose(energy_array,saved_energies,rtel = .01).any()):
-            assert ValueError("Saved Spectral Energies Have Shifted to Far from Reference")
+            raise ValueError("Saved Spectral Energies Have Shifted to Far from Reference")
         return saved_hamiltonian, saved_energies
 
 def integrate_region(function,domain,center,distance):
@@ -907,7 +907,7 @@ def create_organic_tmd_hamiltonian(acd_length,num_quanta,tmd_ex_basis_size,organ
     m_elem_matrix_x = acd_tmd_vec_pot_ratio/np.sqrt(2)*(acd_m_elem_matrix_plus+acd_m_elem_matrix_minus).T+tmd_m_elem_matrix_x/m_e
     if (np.array_equiv(full_basis[0,:],np.array([0,0,-1,-1,-1]))):
         m_0n_arrays = jc.M_0N_ARRAYS(m_elem_matrix_plus[0,:],m_elem_matrix_minus[0,:],m_elem_matrix_x[0,:]) #assumes that first state is the null state
-    else: ValueError("First basis element must be null state")
+    else: raise ValueError("First basis element must be null state")
     #selecting out by specific states
     m_elem_matrix_plus = a_plus_dag*m_elem_matrix_plus+a_plus*m_elem_matrix_plus.T.conj()
     m_elem_matrix_minus = a_minus_dag * m_elem_matrix_minus + a_minus * m_elem_matrix_minus.T.conj()
@@ -1191,7 +1191,7 @@ def helicity_from_eigenvecs(eigenvecs,full_basis,plus_index,minus_index,sign_con
         plus_eigenvecs = np.einsum("i,ijk->ijk",plus_values,eigenvecs)
         minus_eigenvecs = np.einsum("i,ijk->ijk",minus_values,eigenvecs)
     else:
-        assert ValueError("Eigenvector tensor dimension must be 2 or 3")
+        raise ValueError("Eigenvector tensor dimension must be 2 or 3")
     p_plus = np.sum(np.abs(plus_eigenvecs)**2,axis =0)
     p_minus = np.sum(np.abs(minus_eigenvecs)**2,axis = 0)
     helicity = (p_minus-p_plus)/(p_plus+p_minus)
@@ -1210,7 +1210,7 @@ def polaritonic_characteristic_from_eigenvecs(eigenvecs,full_basis,photonic_indi
         elec_eigenvecs = np.einsum("i,ijk->ijk", elec_weights, eigenvecs)
         photon_eigenvecs = np.einsum("i,ijk->ijk",photon_weights, eigenvecs)
     else:
-        assert ValueError("Eigenvector tensor dimension must be 2 or 3")
+        raise ValueError("Eigenvector tensor dimension must be 2 or 3")
     chi_elec = -np.abs(np.sum(np.abs(elec_eigenvecs)**2,axis= 0)-.5)+.5
     chi_phot = -np.abs(np.sum(np.abs(photon_eigenvecs)**2,axis= 0)-.5)+.5
     return chi_phot,chi_elec
@@ -1238,7 +1238,7 @@ def polaritonic_characteristic_v2_from_eigenvecs(eigenvecs,full_basis, photonic_
         elec_eigenvecs = np.einsum("i,ijk->ijk", elec_weights, eigenvecs)
         photon_eigenvecs = np.einsum("i,ijk->ijk",photon_weights, eigenvecs)
     else:
-        assert ValueError("Eigenvector tensor dimension must be 2 or 3")
+        raise ValueError("Eigenvector tensor dimension must be 2 or 3")
     chi_elec = np.sqrt(np.sum(elec_eigenvecs ** 2, axis=0))
     chi_phot = np.sqrt(np.sum(photon_eigenvecs** 2, axis=0))
     return np.abs(2*chi_elec*chi_phot)
@@ -1522,7 +1522,7 @@ def mean_interaction_length(spectrum,dielectric_params,energy_array,dip_mags,dip
     :return:
     '''
     if (dielectric_params.length>= 1.01 or dielectric_params.length<= 0.99):
-        ValueError("Dielectric parameters must be length independent, indicated by length = 1")
+        raise ValueError("Dielectric parameters must be length independent, indicated by length = 1")
     #fully perturbative--the expression in the manuscript
     if (style == "full_anal"):
         dipole_operators = dip_mags #you don't need to account for isotropic averaging as int cos^2(x) = 1/2 for a full cycle as 2k = abs, which cancels out that factor
@@ -1533,7 +1533,7 @@ def mean_interaction_length(spectrum,dielectric_params,energy_array,dip_mags,dip
     elif (style == "full_numeric"):
         mean_int_length = solve_mean_interaction_length(spectrum,dielectric_params,energy_array,dip_mags,dip_angles,loss)
     else:
-        ValueError("Style not found")
+        raise ValueError("Style not found")
     return mean_int_length
 # general, accounts for m00 shift
 def mean_interaction_length_mueller(mueller_matrix):
@@ -1546,7 +1546,7 @@ def mean_interaction_length_mueller(mueller_matrix):
 
 def select_from_energies(value_array,spectrum,energy_array):
     if (np.size(value_array) != np.size(spectrum)):
-        ValueError("Spectrum and array must have equal size")
+        raise ValueError("Spectrum and array must have equal size")
     selected_array = np.zeros(np.size(energy_array),dtype = value_array.dtype)
     if (np.isscalar(energy_array)):
         energy_array = np.array([energy_array])

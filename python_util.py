@@ -43,10 +43,10 @@ def interweave_arrays(array_1,array_2):
     :param array_2:
     :return:
     '''
-    if (np.ndim(array_1)!= 1 or np.ndim(array_2)!= 1): ValueError("Array dimensions must be 1")
-    if (np.size(array_1)!= np.size(array_2)):ValueError("Arrays must be same size to be interwoven")
+    if (np.ndim(array_1)!= 1 or np.ndim(array_2)!= 1): raise ValueError("Array dimensions must be 1")
+    if (np.size(array_1)!= np.size(array_2)):raise ValueError("Arrays must be same size to be interwoven")
     else: interweaved_size = np.size(array_1)+np.size(array_2)
-    if (array_1.dtype != array_2.dtype):ValueError("Arrays must have save datatype")
+    if (array_1.dtype != array_2.dtype):raise ValueError("Arrays must have save datatype")
     else: array_dtype = array_2.dtype
     interweaved_array = np.empty(shape = (interweaved_size),dtype= array_dtype)
     interweaved_array[0::2] = array_1
