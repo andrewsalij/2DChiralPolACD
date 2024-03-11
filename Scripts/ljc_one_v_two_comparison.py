@@ -16,7 +16,7 @@ cav_freq_array = np.linspace(1,4,100)
 energies_to_save =12
 energy_save = np.zeros((energies_to_save,np.size(cav_freq_array),2))
 a_x_save =  np.zeros((energies_to_save,energies_to_save,np.size(cav_freq_array),2),dtype= np.csingle)
-vec_pot_1 = 35/np.sqrt(2)
+vec_pot_1 = 70/np.sqrt(2)
 polarization = np.array([1,1])
 
 length = dielectric_params.length

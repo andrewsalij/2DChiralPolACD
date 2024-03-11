@@ -30,7 +30,7 @@ chiral_int_pert, m_plus,m_minus = ljc.coupling_element_cavity_sweep(energy_array
 chiral_int_full, m_plus,m_minus = ljc.coupling_element_cavity_sweep(energy_array,cav_freq_array,dipole_matrix,dielectric_params,spectrum,length_by_energy,style = "full")
 
 
-chiral_semisimple = ljc.chiral_factor_semi_approximate(cav_freq_array,energy_array,dip_mags,dielectric_params,length_by_energy)
+chiral_semisimple = ljc.chiral_factor_semi_approximate(cav_freq_array,energy_array,dip_mags,dielectric_params,dip_angles)
 
 plt.plot(cav_freq_array,chiral_int_full[0,:],label = "Numeric")
 plt.plot(cav_freq_array,chiral_int_pert[0,:],label = "First Analytic")

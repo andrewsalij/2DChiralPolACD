@@ -697,8 +697,6 @@ def organic_hamiltonian_ldlb_no_vib(num_quanta,energy_array,cavity_freq,vec_pot,
     :param to_counter_rotate:
     :return:
     '''
-    elem_charge = 1
-    m_e = 5.10999e5 # eV/c**2
     if type(length) is np.ndarray:
         length = select_from_energies(length,spectrum,cavity_freq)
     dip_mags,dip_angles = dt.dipole_matrix_to_params(dipole_matrix)
@@ -790,7 +788,7 @@ def jaynes_cummings_organic_ldlb_sweep(num_quanta,energy_array,cavity_freq_array
     a_x_to_save[:,:,0] = a_x_init
     for i in range(1,cavity_its):
         print(i)
-        new_jc_h,new_chiral_int = organic_hamiltonian_ldlb_no_vib(num_quanta,energy_array,cavity_freq_array[i],vec_pot,polarization,dipole_matrix,dielectric_params,spectrum,length,omit_zero_state,mueller_correction,brown_style,interaction_mask=interaction_mask,to_counter_rotate=to_counter_rotate)
+        new_jc_h,new_chiral_int = organic_hamiltonian_ldlb_no_vib(num_quanta,energy_array,cavity_freq_array[i],vec_pot,polarization,dipole_matrix,dielectric_params,spectrum,length,omit_zero_state=omit_zero_state,mueller_correction=mueller_correction,brown_style=brown_style,interaction_mask=interaction_mask,to_counter_rotate=to_counter_rotate)
         chiral_int_set[:,i] = new_chiral_int
         cur_e_x, cur_a_x = base.solve_hamiltonian(new_jc_h.astype(np.csingle)) #type fixing to ensure that there isn't a crash due to typing issues
         e_x_to_save[:,i] = cur_e_x

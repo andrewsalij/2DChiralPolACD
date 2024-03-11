@@ -119,7 +119,7 @@ plt.savefig("eta_comparison.pdf")
 plt.show()
 
 chiral_simple = ljc.chiral_factor_ultra_approximate(energy_array[0],energy_array[1],dielectric_params.gamma*energy_array[1],cav_freq_array)
-chiral_semisimple = ljc.chiral_factor_semi_approximate(cav_freq_array,energy_array,dip_mags,dielectric_params,length_by_energy)
+chiral_semisimple = ljc.chiral_factor_semi_approximate(cav_freq_array,energy_array,dip_mags,dielectric_params,dip_angles)
 chiral_anal = ljc.chiral_factor_two_dipole_anal(cav_freq_array,energy_array,dip_mags,dip_angles,dielectric_params,length_by_energy)
 #plt.plot(cav_freq_array,chiral_simple)
 plt.plot(cav_freq_array,chiral_int_set[0,:])
