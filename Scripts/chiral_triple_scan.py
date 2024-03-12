@@ -50,6 +50,7 @@ chiral_int_g_full, m_plus,m_minus = ljc.coupling_element_gamma_sweep(energy_arra
 
 chiral_gamma_approx = ljc.chiral_factor_approximate_gamma_sweep(e_cav,energy_array,dip_mags,dip_angles,damping_array,dielectric_params)
 
+
 gamma_to_save = np.vstack((damping_array,chiral_int_g_full[0,:],chiral_int_g_full[1,:],chiral_gamma_approx[0,:],chiral_gamma_approx[1,:]))
 
 np.save("chiral_int_gamma_scan"+suffix+".npy",gamma_to_save)

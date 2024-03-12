@@ -311,7 +311,7 @@ def sum_different_indices(array):
         different_index_sum_array[i] = np.sum(masked_array)
     return different_index_sum_array
 
-#this is referred to as sigma in the notes--it is the \frac{A_1}{z}\omega\xi |\mu_m|^2\omega_m W_m \sin(2\beta_{nm}) term
+#this is referred to as sigma in the notes--it is the \frac{A_1}{z}\omega\xi |\mu_m|^2\omega_m W_m \sin(2\beta_{mn}) term
 #provides chiral factor over n index where n is the electronic eigenstates
 def chiral_factor(a_1,length,cavity_freq,energy_array,dip_mags,dip_angles,w_m_at_cavity_freq,xi,style = "full"):
     if (style == "full"):
@@ -343,11 +343,6 @@ def chiral_factor_pert(a_1,xi,cavity_freq,energy_array,dip_mags,dip_angles,w_m_a
         chiral_factor_nm = prefactor*dipole_contrib_m/dipole_contrib_n*beta_nm
     np.fill_diagonal(chiral_factor_nm, 0)
     return -np.sum(chiral_factor_nm, axis=0)
-
-#case for two dipoles
-#this approximation is basically useless, use semi-approximate instead
-def chiral_factor_ultra_approximate(energy_1,energy_2,damping_2,spectrum):
-    return -1/(2)*((energy_2**2-spectrum**2))/(damping_2*spectrum)
 
 def get_two_dipole_params(spectrum,energy_array,dielectric_params):
     v_n = dt.f_dielectric_im(energy_array, spectrum, dielectric_params.damping_array(energy_array))
@@ -1133,14 +1128,11 @@ def basis_weighting(full_basis,index,boolean_weighting = False,elec_style = Fals
 
 
 #plus index, minus index in terms of basis
-#minus index is lhp, plus is rhp by default --note that this opposite the quantum optics convention
-#that is, for optics, in the alternate convention, (1 i) is RHP for the Jones vector
-#we return LHP-RHP
 def helicity_from_eigenvecs(eigenvecs,full_basis,plus_index,minus_index,sign_convention = "default"):
     '''
     Note that this form of the helicity varies from -1 to 1, unlike the -2 to 2 convention often encountered
     in the literature (g = 2*(L-R)/(L+R)), instead of g = (L-R)/(L+R). In many plotting routines, this is
-    accounted for by multiplying by 2 if "old_factor=True"
+    accounted for by multiplying by 2 if "old_factor=True."
     :param eigenvecs:
     :param full_basis:
     :param plus_index:
