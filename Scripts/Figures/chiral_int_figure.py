@@ -9,7 +9,7 @@ energy_array = np.array([2,3])
 energies = energy_array
 dip_mags = 1e-3*np.array([1,1])
 
-dip_angles = np.array([0,np.pi/4])
+dip_angles = np.array([0,-np.pi/4])
 dipole_matrix = dt.create_dipole_matrix_polar_2D(dip_mags,dip_angles)
 
 cav_freq_array = np.linspace(1,5,100)

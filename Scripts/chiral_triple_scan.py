@@ -4,7 +4,7 @@ import dielectric_tensor as dt
 import matplotlib.pyplot as plt
 
 
-suffix = "2pt1eV_num"
+suffix = "2pt1eV"
 dielectric_params = dt.DIELECTRIC_PARAMS(iso_hf_dielectric_const=8,volume_cell= 5.8075e-7,damping_factor=.1,
                      length=1,gamma_type="linear")
 
@@ -12,7 +12,7 @@ energy_array = np.array([2,3])
 energies = energy_array
 dip_mags = 1.05474e-3*np.array([1,1]) #10 Debye
 
-dip_angles = np.array([0,np.pi/4])
+dip_angles = np.array([0,-np.pi/4])
 dipole_matrix = dt.create_dipole_matrix_polar_2D(dip_mags,dip_angles)
 
 cav_freq_array = np.linspace(1,5,100)

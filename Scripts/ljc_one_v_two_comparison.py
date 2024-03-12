@@ -10,7 +10,7 @@ energy_array = np.array([2,3])
 energies = energy_array
 dip_mags = 1.05474e-3*np.array([1,1]) #10 Debye
 
-dip_angles = np.array([0,np.pi/4])
+dip_angles = np.array([0,-np.pi/4])
 spectrum = np.linspace(1, 5, 1000)
 cav_freq_array = np.linspace(1,4,100)
 energies_to_save =12
@@ -37,6 +37,8 @@ e_x_full, a_x_full,chiral_int = ljc.jaynes_cummings_organic_ldlb_sweep(2,energie
                                                                        mueller_correction = False,brown_style="pert",interaction_mask = None,to_counter_rotate=True)
 
 e_x_masked, a_x_masked,chiral_int = ljc.jaynes_cummings_organic_ldlb_sweep(2,energies,cav_freq_array,vec_pot_1,polarization,dipole_matrix,dielectric_params,spectrum,length_array,mueller_correction = False,brown_style="pert",interaction_mask = np.array([1,0]))
+
+chiral_int1 = ljc.chiral_factor_semi_approximate(cav_freq_array,energies,dip_mags,dielectric_params,dip_angles)
 
 energy_save[:,:,0] = e_x_full
 energy_save[:,:,1] = e_x_masked

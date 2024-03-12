@@ -20,7 +20,7 @@ dielectric_params = dt.DIELECTRIC_PARAMS(iso_hf_dielectric_const=8,volume_cell= 
 
 energy_array = np.array([2,2+del_energy_set[0]])
 dip_mags = 1.05474e-3 * np.array([1, 1])  # 10 Debye
-dip_angles = np.array([0,np.pi/4])
+dip_angles = np.array([0,-np.pi/4])
 
 
 vec_pot = vp_set[0]

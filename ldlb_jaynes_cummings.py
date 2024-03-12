@@ -228,36 +228,6 @@ def interaction_hamiltonian_element(dipole_operator,energy,vector_potential,unit
     return (dipole_operator*vector_potential*energy*1j/c)
 
 
-#perturbative treatment
-#vec_pot is scalar value for nonpolarized light
-def interaction_hamiltonian_v2(dipole_matrix,energy_array,spectrum,vector_potential,dielectric_params,length,unit_defs = dt.UNIT_DEFINITIONS(1,1,1/(4*np.pi*0.007297))):
-    dip_mags, dip_angles = dt.dipole_matrix_to_params(dipole_matrix)
-    v_n = dt.f_dielectric_im(resonant_energy=energy_array,spectrum=spectrum,damping_factor=dielectric_params.damping_array(energy_array))
-    w_m = dt.f_dielectric_real(resonant_energy=energy_array,spectrum=spectrum,damping_factor=dielectric_params.damping_array(energy_array))
-    #normal_interaction = np.einsum("ij,j->i",dipole_matrix,vector_potential)
-    normal_interaction = -1j*dip_mags*vector_potential
-    #normal_interaction_spec = np.outer(normal_interaction,spectrum)
-    #normal_interaction_spec = np.tile(normal_interaction,(np.size(spectrum),1)).T*v_n
-    normal_interaction_spec = dirac_selector_separated(spectrum,energy_array,normal_interaction)
-    brown_params = brown_params_from_raw(dielectric_params,dipole_matrix,energy_array,spectrum,length)
-    a_1 = brown_params[0][1]
-    xi = 1/(unit_defs.hbar*unit_defs.c*unit_defs.e0*np.sqrt(dielectric_params.epsilon_inf)*dielectric_params.v)
-    chiral_pref = a_1*spectrum*xi
-    s_m = dip_mags**2*energy_array
-    chiral_contribution = np.outer(s_m,chiral_pref)*w_m
-    angles_tiled = np.tile(dip_angles,(np.size(dip_angles),1))
-    #index of tiled array is m,n with transpose changing with m and normal changing with n
-    beta_nm = np.nan_to_num(np.sin(2*(angles_tiled-angles_tiled.T)))
-    sum_chiral_contribution = np.einsum("ij,il->lj",chiral_contribution,beta_nm)
-    return normal_interaction_spec,sum_chiral_contribution
-
-def h_int_v2_show(normal_interaction_spec,sum_chiral_contribution):
-    h_n = np.sum(normal_interaction_spec,axis = 0)
-    h_l = np.sum(normal_interaction_spec*np.sqrt(1+sum_chiral_contribution),axis =0)
-    h_r =  np.sum(normal_interaction_spec*np.sqrt(1-sum_chiral_contribution),axis =0)
-    return h_n, h_l, h_r
-
-
 def get_chiral_interaction_constants(dipole_matrix,dielectric_params,spectrum,energy_array,length, cavity_freq,unit_defs = dt.UNIT_DEFINITIONS(1,1,1/(4*np.pi*0.007297)),style= "default"):
     w_m = dt.f_dielectric_real(resonant_energy=energy_array, spectrum=spectrum,
                                damping_factor=dielectric_params.damping_array(energy_array))
@@ -419,7 +389,7 @@ def chiral_factor_approximate_gamma_sweep(cav_freq,energy_array,dip_mags,dip_ang
     w_n, v_n = w_v_tiled(energies_tiled,cav_freq,gamma_tiled)
     abs = np.sum(dips_tiled**2*energies_tiled*v_n,axis = 0)
     for i in range (0,np.size(energy_array)):
-        numerator = np.sum(dips_tiled**2*energies_tiled*w_n*np.sin(2*(dip_angles[i]-angles_tiled)),axis = 0)
+        numerator = np.sum(dips_tiled**2*energies_tiled*w_n*np.sin(2*(angles_tiled-dip_angles[i])),axis = 0)
         sigma_set[i,:] = 1/2*numerator/abs
     return sigma_set
 
@@ -439,7 +409,7 @@ def chiral_factor_approximate_dipole_sweep(cav_freq,energy_array,dip_base_mag,di
     w_n, v_n = w_v_tiled(energies_tiled,cav_freq,gamma_tiled)
     abs = np.sum(dips_tiled**2*energies_tiled*v_n,axis = 0)
     for i in range (0,np.size(energy_array)):
-        numerator = np.sum(dips_tiled**2*energies_tiled*w_n*np.sin(2*(dip_angles[i]-angles_tiled)),axis = 0)
+        numerator = np.sum(dips_tiled**2*energies_tiled*w_n*np.sin(2*(angles_tiled-dip_angles[i])),axis = 0)
         sigma_set[i,:] = 1/2*numerator/abs
     return sigma_set
 
@@ -453,7 +423,7 @@ def chiral_factor_approximate_w2_sweep(cav_freq,energy_array,dip_mags,w2_array,d
     w_n, v_n = w_v_tiled(energies_tiled,cav_freq,gamma_tiled)
     abs = np.sum(dips_tiled**2*energies_tiled*v_n,axis = 0)
     for i in range (0,np.size(energy_array)):
-        numerator = np.sum(dips_tiled**2*energies_tiled*w_n*np.sin(2*(dip_angles[i]-angles_tiled)),axis = 0)
+        numerator = np.sum(dips_tiled**2*energies_tiled*w_n*np.sin(2*(angles_tiled-dip_angles[i])),axis = 0)
         sigma_set[i,:] = 1/2*numerator/abs
     return sigma_set
 
@@ -1163,8 +1133,7 @@ def basis_weighting(full_basis,index,boolean_weighting = False,elec_style = Fals
 
 
 #plus index, minus index in terms of basis
-#need to check whether this really works for num_quanta > 1
-#minus index is lhp, plus is rhp --note that this opposite the quantum optics convention
+#minus index is lhp, plus is rhp by default --note that this opposite the quantum optics convention
 #that is, for optics, in the alternate convention, (1 i) is RHP for the Jones vector
 #we return LHP-RHP
 def helicity_from_eigenvecs(eigenvecs,full_basis,plus_index,minus_index,sign_convention = "default"):
@@ -1192,8 +1161,8 @@ def helicity_from_eigenvecs(eigenvecs,full_basis,plus_index,minus_index,sign_con
         raise ValueError("Eigenvector tensor dimension must be 2 or 3")
     p_plus = np.sum(np.abs(plus_eigenvecs)**2,axis =0)
     p_minus = np.sum(np.abs(minus_eigenvecs)**2,axis = 0)
-    helicity = (p_minus-p_plus)/(p_plus+p_minus)
-    if (sign_convention != "default"):
+    helicity = (p_plus-p_minus)/(p_plus+p_minus)
+    if (sign_convention == "flipped"):
         helicity = -1*helicity
     return  helicity
 #note that this sign convention is opposite of paper

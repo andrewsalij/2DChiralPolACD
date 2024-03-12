@@ -21,9 +21,9 @@ my_mock_results = ap.TDDFT_RESULTS(non_vib_energies, None,  np.array([.455, .11,
 vib_results = my_mock_results.vibronic_dressing(np.array([0, 1, 2]), np.array([.185, .185, .185]),
                                                 np.array([1.04, 0, 0]), vib_modes=np.arange(8))
 
-#note this is reverse sign from JACS paper
-alpha =-.0583*np.pi
-beta = .175*np.pi
+
+alpha =.0583*np.pi
+beta = -.175*np.pi
 init_dip_mags = np.sqrt(vib_results.osc_array)
 dip_mags = first_transition_strength/np.sqrt(my_mock_results.osc_array[0])* init_dip_mags
 dip_angles = np.hstack((np.ones(8)*0,np.ones(8)*alpha,np.ones(8)*beta))

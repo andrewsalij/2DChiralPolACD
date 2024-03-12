@@ -9,7 +9,7 @@ gamma_type = "linear"
 non_vib_energies =np.array([2.6,3.99])
 elec_results = my_mock_results = ap.TDDFT_RESULTS(non_vib_energies, None, np.array([.455,.10]), "my_brain", "my_brain")
 
-beta = .175*np.pi
+beta = -.175*np.pi
 dip_angles = np.array([0,beta])
 #second_film_rotation = -.021*np.pi
 dielectric_params = dt.DIELECTRIC_PARAMS(iso_hf_dielectric_const=8,volume_cell= 5.8075e-7,damping_factor=gamma ,
