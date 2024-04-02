@@ -651,60 +651,6 @@ class POLARIZANCE():
         return POLARIZANCE(self.b_matrix[:,idx,np.newaxis],self.d_matrix[:,idx,np.newaxis],
                            self.p_matrix[:,idx,np.newaxis],self.absorbance[idx,np.newaxis])
 
-
-
-#purports that linear_optics are length invariant
-def mueller_perturbative_params(linear_optics,length = 1,style = "default"):
-    polarizance = polarizance_from_linear_optics(linear_optics)
-    brown_params = brown_params_from_polarizance(polarizance,length=  length)
-    ld = linear_optics.ld
-    lb = linear_optics.lb
-    ldp = linear_optics.ldp
-    lbp = linear_optics.lbp
-    if (style == "second"): #only expands MM to second order
-        m00 = 1 + 1 / 2 * length ** 2 * (ld ** 2 + ldp ** 2)
-        m03 = 1/2*length**2*(ldp*lb-ld*lbp)
-    elif (style == "a0_unity"): #treats diagonal contribution as 1
-        m00 = 1+ brown_params[1] * (ld ** 2 + ldp ** 2)
-        m03 = brown_params[1] * (ldp * lb - ld * lbp)
-    else: #non perturbative treatment
-        m00  = brown_params[0]+brown_params[1]*(ld**2+ldp**2)
-        m03 = brown_params[1]*(ldp*lb-ld*lbp)
-    return m00, m03
-
-def effective_absorption_matrix_elements(mean_effective_absorption,m00,m03,style = "default"):
-    a_e = mean_effective_absorption
-    s3 = np.array([1,-1]) # controls right/left sign
-    if (style == "m00_unity_first"):
-        a_r = a_e-s3[0]*m03
-        a_l = a_e-s3[1]*m03
-        a_n = a_e
-    elif (style == "m00_unity_second"):
-        a_r = a_e - s3[0] * m03+1/2*(s3[0] * m03)**2
-        a_l = a_e - s3[1] * m03+1/2*(s3[1] * m03)**2
-        a_n = a_e
-    elif (style == "first"):
-        a_r = a_e - (m00-1+s3[0] * m03)
-        a_l = a_e - (m00-1+s3[1] * m03)
-        a_n = a_e - (m00-1)
-    elif (style == "second"):
-        a_r = a_e - (m00 - 1 + s3[0] * m03)+1/2*(m00 - 1 + s3[0] * m03)**2
-        a_l = a_e - (m00 - 1 + s3[1] * m03)+1/2*(m00 - 1 + s3[1] * m03)**2
-        a_n = a_e - (m00 - 1)+(m00-1)**2/2
-    else: #non perturbative treatmetn
-        a_r = a_e-np.log(m00+s3[0]*m03)
-        a_l = a_e-np.log(m00+s3[1]*m03)
-        a_n = a_e-np.log(m00)
-    return a_r, a_l, a_n
-
-def get_effective_absorption_from_linear_optics(linear_optics,length  =1 ,mueller_pert_style=  "default",absorption_pert_style = "default"):
-    m00, m03 = mueller_perturbative_params(linear_optics,length = length,style = mueller_pert_style)
-    return effective_absorption_matrix_elements(linear_optics.absorbance*length,m00,m03,style = absorption_pert_style)
-
-def get_effective_absorption_and_mm_elems_from_linear_optics(linear_optics,length  =1 ,mueller_pert_style=  "default",absorption_pert_style = "default"):
-    m00, m03 = mueller_perturbative_params(linear_optics, length=length, style=mueller_pert_style)
-    return (m00, m03)+ effective_absorption_matrix_elements(linear_optics.absorbance*length, m00, m03, style=absorption_pert_style)
-
 def colormap_mueller_matrix(mueller_matrix,figure,axis,filename = "",cmap = plt.cm.get_cmap('seismic')):
     plotted_matrix = axis.matshow(mueller_matrix,cmap = cmap)
     if (filename):
@@ -891,9 +837,9 @@ def mueller_matrix_grid_plot_set(x_axis,mueller_matrix_stack_set,filename = "",f
 
 
 def effective_cd_from_matrix_stack(effective_absorption,matrix_stack):
-    '''Returns effecitive CD. CD defined with sign convention L-R'''
-    alpha_r = effective_absorption - np.log(matrix_stack[0, 0, :] - matrix_stack[0, 3, :])
-    alpha_l = effective_absorption - np.log(matrix_stack[0, 0, :] + matrix_stack[0, 3, :])
+    '''Returns effective CD. CD defined with sign convention L-R. effective absorption is \alpha*z, or -log(e^(-\alpha*z))'''
+    alpha_r = effective_absorption - np.log(matrix_stack[0, 0, :] + matrix_stack[0, 3, :])
+    alpha_l = effective_absorption - np.log(matrix_stack[0, 0, :] - matrix_stack[0, 3, :])
     return ((alpha_l-alpha_r)/2).real, ((alpha_r+alpha_l)/2).real
 
 
@@ -1056,29 +1002,38 @@ def effective_absorption_plot_from_params(x_axis,alpha_r,alpha_l,alpha_n,filenam
     figure.tight_layout()
     pu.filename_handling(figure,filename)
 
-def cd_from_polarizance(polarizance,length = 1,style = "full"):
-    '''Returns observed circular dichroism (from Mueller matrix) spec from a POLARIZANCE object '''
+def polarizance_get_m00_m03(polarizance,length=1):
     brown_params = brown_params_from_polarizance(polarizance,length = length)
     d1,d2,d3,b1,b2,b3 = polarizance.provide_tuples()
-    a0, a1 = brown_params[0],brown_params[1]
-    m00 = a0+a1*(d1**2+d2**2)
-    m03 = a1*(b2*d1-b1*d2)
+    a0, a1,a2,a3 = brown_params #unpack
+    m00 = a0+a1*(d1**2+d2**2+d3**2)
+    m03 = a1*(b2*d1-b1*d2)-a2*d3+a3*b3
+    return m00,m03
+def cd_from_polarizance(polarizance,length = 1,style = "full"):
+    '''Returns observed circular dichroism (from Mueller matrix, with length factor) spec from a POLARIZANCE object '''
+    m00,m03 = polarizance_get_m00_m03(polarizance,length = length)
     if (style == "full"):
         cd = 1 / 2 * np.log((m00 + m03) / (m00 - m03))
-    else:
-        cd = m03
+    else: cd = m03
     return cd
+def abs_circ_from_polarizance(polarizance,length = 1,style = "full"):
+    '''Returns observed circular dichroism (from Mueller matrix, with length factor) spec from a POLARIZANCE object '''
+    m00,m03 = polarizance_get_m00_m03(polarizance,length = length)
+    if (style == "full"):
+        a_l = polarizance.absorbance*length - np.log(m00 - m03)
+        a_r = polarizance.absorbance*length - np.log(m00 + m03)
+    else:
+        a_l = polarizance.absorbance*length + m03
+        a_r = polarizance.absorbance*length - m03
+    return a_l,a_r
 
-def abs_avg_from_polarizance(polarizance,length =1):
-    '''Returns observed average absorption (from Mueller matrix) spec from a POLARIZANCE object'''
-    brown_params = brown_params_from_polarizance(polarizance, length=length)
-    d1, d2, d3, b1, b2, b3 = polarizance.provide_tuples()
-    a0, a1 = brown_params[0], brown_params[1]
-    m00 = a0 + a1 * (d1 ** 2 + d2 ** 2)
-    iso_abs = polarizance.absorbance
-    abs_avg = iso_abs-np.log(m00)
-    abs_metric = abs_avg/iso_abs
-    return abs_avg, abs_metric
+def get_abs_circ_mueller_corrections(polarizance,length = 1):
+    '''Returns the circular dichroism Mueller correction for a given polarizance object
+    Correction in terms of absorbance'''
+    abs_l_full,abs_r_full = abs_circ_from_polarizance(polarizance,length = length,style = "full")
+    abs_l_m03,abs_r_m03 = abs_circ_from_polarizance(polarizance,length = length,style = "m03")
+    return abs_l_full-abs_l_m03,abs_r_full-abs_r_m03
+
 
 def rotation_mueller_matrix_num(theta):
     '''Matrix for arbitrary rotation (theta) of sample in the xy plane'''

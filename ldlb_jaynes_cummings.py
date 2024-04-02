@@ -471,7 +471,7 @@ def chiral_factor_two_dipole_anal(spectrum,energy_array,dip_mags,dip_angles,diel
     return length_factor*w2*dip_mags[1]**2*w_m[1,:]
 
 def isotropic_avg_absorption_correction(polarizance,length):
-    '''Gives difference between isotropic absopance treated via e^(-A) and from M_00 element'''
+    '''Gives difference between isotropic absopance treated via e^(-A) and from M_00 element. Units are inverse length'''
     brown_params = brown_params_from_polarizance(polarizance, length=length)
     d1, d2, d3, b1, b2, b3 = polarizance.provide_tuples()
     a0, a1 = brown_params[0], brown_params[1]
@@ -480,7 +480,7 @@ def isotropic_avg_absorption_correction(polarizance,length):
     return correction
 
 def apparent_cd_correction(polarizance,length):
-    '''Returns value between CD using both M_00 and M_03 and CD using only M_03'''
+    '''Returns value between CD using both M_00 and M_03 and CD using only M_03. Units are inverse length'''
     cd_full = mueller.cd_from_polarizance(polarizance,length,"full")/length
     cd_m03 = mueller.cd_from_polarizance(polarizance,length,"partial")/length
     correction = cd_full-cd_m03
@@ -520,12 +520,13 @@ def integrate_region(function,domain,center,distance):
 
 #polarization index is 1 for LHP, -1 for RHP
 #gives quantized interaction for a given polarization vector potential
-def organic_excitonic_array(energy_array,dipole_mags,chiral_int,correction = 0,interaction_mask = None):
-    net_term = chiral_int+correction
+def organic_excitonic_array(energy_array,dipole_mags,chiral_int,mueller_correction = 0,interaction_mask = None):
+    '''Gives interaction term 1j*\omega_n*mu*sqrt(1/2+1/2*chiral_int+correction)'''
+    net_term = chiral_int+mueller_correction
     net_term = np.clip(net_term,-1,1)
     if interaction_mask is None:
         interaction_mask = np.ones(np.size(energy_array))
-    interaction_array = 1j*energy_array*dipole_mags*np.sqrt(1/2+1/2*net_term)*interaction_mask
+    interaction_array = 1j*energy_array*dipole_mags*np.sqrt(1/2*(1+net_term))*interaction_mask
     return interaction_array
 
 def achiral_interaction(energy_array,dipole_mags,vector_potential):
@@ -668,16 +669,7 @@ def get_chiral_couplings_two_dipoles(cav_array,dipole_matrix,dielectric_params,s
         gr2_array[i] = m_elem_array_right[1]*a0_right
     return np.vstack((gl1_array,gl2_array,gr1_array,gr2_array))
 
-def get_mueller_correction(spectrum,cavity_freq,dielectric_params,dipole_matrix,energy_array,length):
-    '''Provides corrections to isotropic absorbance and CD--not fully supported'''
-    spectrum_selected = select_from_energies(spectrum, spectrum, cavity_freq)
-    abs_correction = np.zeros(np.size(energy_array))
-    cd_correction = np.zeros(np.size(energy_array))
-    for i in range(0,np.size(energy_array)):
-        polarizance_selected = get_polarizance_params_dielectric(dielectric_params, dipole_matrix[i,:], energy_array[i], spectrum_selected)
-        abs_correction[i] = isotropic_avg_absorption_correction(polarizance_selected,length)
-        cd_correction[i] = apparent_cd_correction(polarizance_selected,length)
-    return abs_correction,cd_correction
+
 
 def organic_hamiltonian_ldlb_no_vib(num_quanta,energy_array,cavity_freq,vec_pot,polarization,dipole_matrix,dielectric_params,spectrum,length = 1,omit_zero_state = False,mueller_correction =False,brown_style = "default",interaction_mask = None,to_counter_rotate=False):
     '''
@@ -732,29 +724,19 @@ def organic_hamiltonian_ldlb_no_vib(num_quanta,energy_array,cavity_freq,vec_pot,
 
     a_1, xi, w_m_at_cavity_freq,v_n_at_cavity_freq = get_chiral_interaction_constants(dipole_matrix,dielectric_params,spectrum,energy_array,length,cavity_freq,style = brown_style)
     chiral_int = chiral_factor(a_1,length,cavity_freq,energy_array,dip_mags,dip_angles,w_m_at_cavity_freq,xi,style = "full")
-    chiral_int_pert = chiral_factor_pert(a_1,xi,cavity_freq,energy_array,dip_mags,dip_angles,w_m_at_cavity_freq,v_n_at_cavity_freq,length,style = "full_anal")
-    chiral_int_z_anal = chiral_factor_pert(a_1, xi, cavity_freq, energy_array, dip_mags, dip_angles, w_m_at_cavity_freq,
-                                         v_n_at_cavity_freq,length, style="z_anal")
-    a_1_metric = get_a_1_pert_metric(a_1,length)
-    print_variables = True
-    if (print_variables):
-        print("length pref:" + str(a_1 / length))
-        print("length:"+str(length))
-        print("A_1:"+str(a_1))
-        print("a_1_metric:" + str(a_1_metric))
-        print("W_m:" + str(w_m_at_cavity_freq))
-        print("sigma:"+str(chiral_int))
-        print("sigma_pert:" + str(chiral_int_pert))
-        print("sigma_z_anal:"+str(chiral_int_z_anal))
 
     if (mueller_correction):
-        warnings.warn("Mueller correction not implemented--set to 0")
+        background_peaks = 2*cavity_freq*xi*energy_array*dip_mags**2*v_n_at_cavity_freq
+        #LHP, RHP
+        warnings.warn("Mueller Correction not supported--set to 0")
+    else:
+        correction_plus,correction_minus = 0,0
     if (interaction_mask is None):
         int_mask = np.ones(np.size(energy_array))
     else: int_mask = interaction_mask
 
-    m_elem_array_plus = organic_excitonic_array(energy_array,dip_mags,chiral_int,interaction_mask=int_mask) #LHP
-    m_elem_array_minus = organic_excitonic_array(energy_array,dip_mags,-chiral_int,interaction_mask=int_mask) #RHP
+    m_elem_array_plus = organic_excitonic_array(energy_array,dip_mags,chiral_int,mueller_correction=correction_plus,interaction_mask=int_mask) #LHP
+    m_elem_array_minus = organic_excitonic_array(energy_array,dip_mags,-chiral_int,mueller_correction =correction_minus,interaction_mask=int_mask) #RHP
     m_elem_matrix_plus = interaction_array_to_matrices(full_basis,m_elem_array_plus)
     m_elem_matrix_minus = interaction_array_to_matrices(full_basis,m_elem_array_minus)
     m_elem_plus = (a_plus_dag_b*m_elem_matrix_plus.T + a_plus_b_dag * m_elem_matrix_plus.conj())
