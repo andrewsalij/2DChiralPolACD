@@ -33,7 +33,7 @@ full_basis = combo.construct_organic_basis(num_excited_states,1+1)
 def get_helical_pol_lower_polariton(dielectric_params,energy_array,dip_mags,dip_angles,vec_pot,loss = 0,visualize = True):
     length_array = ljc.mean_interaction_length(spectrum,dielectric_params,energy_array,dip_mags,dip_angles,style = "full_anal",loss=loss)
     dipole_matrix = dt.create_dipole_matrix_polar_3D(dip_mags,dip_angles)
-    e_x_full, a_x_full,chiral_int = ljc.jaynes_cummings_organic_ldlb_sweep(1,energy_array,cav_freq_array,vec_pot,polarization,dipole_matrix,dielectric_params,spectrum,length_array,mueller_correction = False,brown_style="pert")
+    e_x_full, a_x_full,chiral_int = ljc.jaynes_cummings_organic_ldlb_sweep(1,energy_array,cav_freq_array,vec_pot,polarization,dipole_matrix,dielectric_params,spectrum,length_array,mueller_correction =False,brown_style="pert")
 
     helical_pol = ljc.helical_polaritonic_characteristic_v2_from_eigenvecs(a_x_full,full_basis,[0,1],[2])
     helical_pol = np.nan_to_num(helical_pol)

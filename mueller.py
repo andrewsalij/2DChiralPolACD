@@ -646,7 +646,7 @@ class POLARIZANCE():
         return diff_matrix
     #no prefactor
     def ldlb(self):
-        return self.d_matrix[1,:]*self.b_matrix[0,:]-self.d_matrix[0,:]*self.b_matrix[1,:]
+        return self.d_matrix[0,:]*self.b_matrix[1,:]-self.d_matrix[1,:]*self.b_matrix[0,:]
     def select_by_index(self,idx):
         return POLARIZANCE(self.b_matrix[:,idx,np.newaxis],self.d_matrix[:,idx,np.newaxis],
                            self.p_matrix[:,idx,np.newaxis],self.absorbance[idx,np.newaxis])
@@ -1064,9 +1064,9 @@ def cd_from_polarizance(polarizance,length = 1,style = "full"):
     m00 = a0+a1*(d1**2+d2**2)
     m03 = a1*(b2*d1-b1*d2)
     if (style == "full"):
-        cd = 1 / 2 * np.log((m00 - m03) / (m00 + m03)) / length
+        cd = 1 / 2 * np.log((m00 + m03) / (m00 - m03))
     else:
-        cd = -m03/length
+        cd = m03
     return cd
 
 def abs_avg_from_polarizance(polarizance,length =1):
@@ -1188,7 +1188,7 @@ def sym_create_diff_m_matrix_troxell(lb,lbp,cb,ld,ldp,cd):
     return sym.Matrix([[0, ld, ldp, -1*cd], [ld, 0, -1 * cb, -1*lbp], [ldp, cb, 0, 1 * lb], [-1*cd, 1 * lbp, -1*lb, 0]])
 
 def sym_brown_params(b1,b2,b3,d1,d2,d3,z):
-    '''Analytic formatization of Brown parameters (Brown 1999)'''
+    '''Analytic formalization of Brown parameters (Brown 1999)'''
     b_vec = sym.Matrix([b1,b2,b3])
     d_vec = sym.Matrix([d1,d2,d3])
     vec_dot_diff = b_vec.dot(b_vec)-d_vec.dot(d_vec)

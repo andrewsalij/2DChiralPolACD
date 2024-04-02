@@ -8,7 +8,9 @@ import ldlb_post_processing as lpp
 import python_util as pu
 import time
 import mueller
-
+import ruamel.yaml as yaml
+import os
+import warnings
 def sum_cross_interaction(energy_array,dipole_mags_array,dipole_angles_array,base_angle,spectrum,gamma_array):
     '''this is the \sum_m s_m w_m sin(2\beta_nm) term in writing'''
     s_m = energy_array*dipole_mags_array**2
@@ -44,7 +46,7 @@ def cd_analytic(dielectric_params, energy_array,dipole_mags_array,dipole_angles_
         second_dipole_contrib = v_n*s_n
         spec_to_use = spectrum
     else:
-        raise ValueError("Either length must be a scalar or a single energy is probed")
+        ValueError("Either length must be a scalar or a single energy is probed")
     length_prefactor = a_1 / length
     total_prefactor = length_prefactor * xi ** 2 * spec_to_use** 2
     abs_cd_anal = total_prefactor*np.sum(total_cross_int*second_dipole_contrib,axis = 0)
@@ -228,6 +230,36 @@ def interaction_hamiltonian_element(dipole_operator,energy,vector_potential,unit
     return (dipole_operator*vector_potential*energy*1j/c)
 
 
+#perturbative treatment
+#vec_pot is scalar value for nonpolarized light
+def interaction_hamiltonian_v2(dipole_matrix,energy_array,spectrum,vector_potential,dielectric_params,length,unit_defs = dt.UNIT_DEFINITIONS(1,1,1/(4*np.pi*0.007297))):
+    dip_mags, dip_angles = dt.dipole_matrix_to_params(dipole_matrix)
+    v_n = dt.f_dielectric_im(resonant_energy=energy_array,spectrum=spectrum,damping_factor=dielectric_params.damping_array(energy_array))
+    w_m = dt.f_dielectric_real(resonant_energy=energy_array,spectrum=spectrum,damping_factor=dielectric_params.damping_array(energy_array))
+    #normal_interaction = np.einsum("ij,j->i",dipole_matrix,vector_potential)
+    normal_interaction = -1j*dip_mags*vector_potential
+    #normal_interaction_spec = np.outer(normal_interaction,spectrum)
+    #normal_interaction_spec = np.tile(normal_interaction,(np.size(spectrum),1)).T*v_n
+    normal_interaction_spec = dirac_selector_separated(spectrum,energy_array,normal_interaction)
+    brown_params = brown_params_from_raw(dielectric_params,dipole_matrix,energy_array,spectrum,length)
+    a_1 = brown_params[0][1]
+    xi = 1/(unit_defs.hbar*unit_defs.c*unit_defs.e0*np.sqrt(dielectric_params.epsilon_inf)*dielectric_params.v)
+    chiral_pref = a_1*spectrum*xi
+    s_m = dip_mags**2*energy_array
+    chiral_contribution = np.outer(s_m,chiral_pref)*w_m
+    angles_tiled = np.tile(dip_angles,(np.size(dip_angles),1))
+    #index of tiled array is m,n with transpose changing with m and normal changing with n
+    beta_nm = np.nan_to_num(np.sin(2*(angles_tiled-angles_tiled.T)))
+    sum_chiral_contribution = np.einsum("ij,il->lj",chiral_contribution,beta_nm)
+    return normal_interaction_spec,sum_chiral_contribution
+
+def h_int_v2_show(normal_interaction_spec,sum_chiral_contribution):
+    h_n = np.sum(normal_interaction_spec,axis = 0)
+    h_l = np.sum(normal_interaction_spec*np.sqrt(1+sum_chiral_contribution),axis =0)
+    h_r =  np.sum(normal_interaction_spec*np.sqrt(1-sum_chiral_contribution),axis =0)
+    return h_n, h_l, h_r
+
+
 def get_chiral_interaction_constants(dipole_matrix,dielectric_params,spectrum,energy_array,length, cavity_freq,unit_defs = dt.UNIT_DEFINITIONS(1,1,1/(4*np.pi*0.007297)),style= "default"):
     w_m = dt.f_dielectric_real(resonant_energy=energy_array, spectrum=spectrum,
                                damping_factor=dielectric_params.damping_array(energy_array))
@@ -251,7 +283,7 @@ def get_chiral_interaction_constants(dipole_matrix,dielectric_params,spectrum,en
         a_1 = brown_params[0][1]
         a_1_at_omega_cav = a_1[cavity_index]
     else:
-        raise ValueError("Length type error (not scalar or array)")
+        ValueError("Length type error (not scalar or array)")
 
     xi = 1 / (unit_defs.hbar * unit_defs.c * unit_defs.e0 * np.sqrt(
         dielectric_params.epsilon_inf) * dielectric_params.v)
@@ -291,7 +323,7 @@ def get_chiral_interaction_constants_set_energy(dipole_matrix,dielectric_params,
         brown_params = brown_params_from_raw_set_energy(dielectric_params, dipole_matrix, energy_array, spectrum, cavity_freq,length,style = style )
         a_1_at_omega_cav = brown_params[0][1]
     else:
-        raise ValueError("Length type error (not scalar or array)")
+        ValueError("Length type error (not scalar or array)")
 
     xi = 1 / (unit_defs.hbar * unit_defs.c * unit_defs.e0 * np.sqrt(
         dielectric_params.epsilon_inf) * dielectric_params.v)
@@ -311,7 +343,7 @@ def sum_different_indices(array):
         different_index_sum_array[i] = np.sum(masked_array)
     return different_index_sum_array
 
-#this is referred to as sigma in the notes--it is the \frac{A_1}{z}\omega\xi |\mu_m|^2\omega_m W_m \sin(2\beta_{mn}) term
+#this is referred to as sigma in the notes--it is the \frac{A_1}{z}\omega\xi |\mu_m|^2\omega_m W_m \sin(2\beta_{nm}) term
 #provides chiral factor over n index where n is the electronic eigenstates
 def chiral_factor(a_1,length,cavity_freq,energy_array,dip_mags,dip_angles,w_m_at_cavity_freq,xi,style = "full"):
     if (style == "full"):
@@ -343,6 +375,11 @@ def chiral_factor_pert(a_1,xi,cavity_freq,energy_array,dip_mags,dip_angles,w_m_a
         chiral_factor_nm = prefactor*dipole_contrib_m/dipole_contrib_n*beta_nm
     np.fill_diagonal(chiral_factor_nm, 0)
     return -np.sum(chiral_factor_nm, axis=0)
+
+#case for two dipoles
+#this approximation is basically useless, use semi-approximate instead
+def chiral_factor_ultra_approximate(energy_1,energy_2,damping_2,spectrum):
+    return -1/(2)*((energy_2**2-spectrum**2))/(damping_2*spectrum)
 
 def get_two_dipole_params(spectrum,energy_array,dielectric_params):
     v_n = dt.f_dielectric_im(energy_array, spectrum, dielectric_params.damping_array(energy_array))
@@ -384,7 +421,7 @@ def chiral_factor_approximate_gamma_sweep(cav_freq,energy_array,dip_mags,dip_ang
     w_n, v_n = w_v_tiled(energies_tiled,cav_freq,gamma_tiled)
     abs = np.sum(dips_tiled**2*energies_tiled*v_n,axis = 0)
     for i in range (0,np.size(energy_array)):
-        numerator = np.sum(dips_tiled**2*energies_tiled*w_n*np.sin(2*(angles_tiled-dip_angles[i])),axis = 0)
+        numerator = -np.sum(dips_tiled**2*energies_tiled*w_n*np.sin(2*(dip_angles[i]-angles_tiled)),axis = 0)
         sigma_set[i,:] = 1/2*numerator/abs
     return sigma_set
 
@@ -404,7 +441,7 @@ def chiral_factor_approximate_dipole_sweep(cav_freq,energy_array,dip_base_mag,di
     w_n, v_n = w_v_tiled(energies_tiled,cav_freq,gamma_tiled)
     abs = np.sum(dips_tiled**2*energies_tiled*v_n,axis = 0)
     for i in range (0,np.size(energy_array)):
-        numerator = np.sum(dips_tiled**2*energies_tiled*w_n*np.sin(2*(angles_tiled-dip_angles[i])),axis = 0)
+        numerator = -np.sum(dips_tiled**2*energies_tiled*w_n*np.sin(2*(dip_angles[i]-angles_tiled)),axis = 0)
         sigma_set[i,:] = 1/2*numerator/abs
     return sigma_set
 
@@ -418,7 +455,7 @@ def chiral_factor_approximate_w2_sweep(cav_freq,energy_array,dip_mags,w2_array,d
     w_n, v_n = w_v_tiled(energies_tiled,cav_freq,gamma_tiled)
     abs = np.sum(dips_tiled**2*energies_tiled*v_n,axis = 0)
     for i in range (0,np.size(energy_array)):
-        numerator = np.sum(dips_tiled**2*energies_tiled*w_n*np.sin(2*(angles_tiled-dip_angles[i])),axis = 0)
+        numerator = -np.sum(dips_tiled**2*energies_tiled*w_n*np.sin(2*(dip_angles[i]-angles_tiled)),axis = 0)
         sigma_set[i,:] = 1/2*numerator/abs
     return sigma_set
 
@@ -434,6 +471,7 @@ def chiral_factor_two_dipole_anal(spectrum,energy_array,dip_mags,dip_angles,diel
     return length_factor*w2*dip_mags[1]**2*w_m[1,:]
 
 def isotropic_avg_absorption_correction(polarizance,length):
+    '''Gives difference between isotropic absopance treated via e^(-A) and from M_00 element'''
     brown_params = brown_params_from_polarizance(polarizance, length=length)
     d1, d2, d3, b1, b2, b3 = polarizance.provide_tuples()
     a0, a1 = brown_params[0], brown_params[1]
@@ -442,8 +480,9 @@ def isotropic_avg_absorption_correction(polarizance,length):
     return correction
 
 def apparent_cd_correction(polarizance,length):
-    cd_full = mueller.cd_from_polarizance(polarizance,length,"full")
-    cd_m03 = mueller.cd_from_polarizance(polarizance,length,"partial")
+    '''Returns value between CD using both M_00 and M_03 and CD using only M_03'''
+    cd_full = mueller.cd_from_polarizance(polarizance,length,"full")/length
+    cd_m03 = mueller.cd_from_polarizance(polarizance,length,"partial")/length
     correction = cd_full-cd_m03
     return correction
 
@@ -630,6 +669,7 @@ def get_chiral_couplings_two_dipoles(cav_array,dipole_matrix,dielectric_params,s
     return np.vstack((gl1_array,gl2_array,gr1_array,gr2_array))
 
 def get_mueller_correction(spectrum,cavity_freq,dielectric_params,dipole_matrix,energy_array,length):
+    '''Provides corrections to isotropic absorbance and CD--not fully supported'''
     spectrum_selected = select_from_energies(spectrum, spectrum, cavity_freq)
     abs_correction = np.zeros(np.size(energy_array))
     cd_correction = np.zeros(np.size(energy_array))
@@ -662,6 +702,8 @@ def organic_hamiltonian_ldlb_no_vib(num_quanta,energy_array,cavity_freq,vec_pot,
     :param to_counter_rotate:
     :return:
     '''
+    elem_charge = 1
+    m_e = 5.10999e5 # eV/c**2
     if type(length) is np.ndarray:
         length = select_from_energies(length,spectrum,cavity_freq)
     dip_mags,dip_angles = dt.dipole_matrix_to_params(dipole_matrix)
@@ -706,19 +748,13 @@ def organic_hamiltonian_ldlb_no_vib(num_quanta,energy_array,cavity_freq,vec_pot,
         print("sigma_z_anal:"+str(chiral_int_z_anal))
 
     if (mueller_correction):
-        abs_correct, cd_correct = get_mueller_correction(spectrum,cavity_freq,dielectric_params,dipole_matrix,energy_array,length)
-        iso_abs = abs_from_operator(dielectric_params,energy_array,cavity_freq,dip_mags,length = 1,separate = True)
-        iso_abs = np.array(iso_abs[:,0])
-        abs_correct_normed = abs_correct/iso_abs
-        cd_correct_normed = cd_correct/iso_abs
-    else:
-        abs_correct_normed, cd_correct_normed = 0,0
+        warnings.warn("Mueller correction not implemented--set to 0")
     if (interaction_mask is None):
         int_mask = np.ones(np.size(energy_array))
     else: int_mask = interaction_mask
-    #minus is lhp, plus is rhp
-    m_elem_array_plus = organic_excitonic_array(energy_array,dip_mags,chiral_int,correction= abs_correct_normed+cd_correct_normed,interaction_mask=int_mask) #LHP
-    m_elem_array_minus = organic_excitonic_array(energy_array,dip_mags,-chiral_int,correction = abs_correct_normed-cd_correct_normed,interaction_mask=int_mask) #RHP
+
+    m_elem_array_plus = organic_excitonic_array(energy_array,dip_mags,chiral_int,interaction_mask=int_mask) #LHP
+    m_elem_array_minus = organic_excitonic_array(energy_array,dip_mags,-chiral_int,interaction_mask=int_mask) #RHP
     m_elem_matrix_plus = interaction_array_to_matrices(full_basis,m_elem_array_plus)
     m_elem_matrix_minus = interaction_array_to_matrices(full_basis,m_elem_array_minus)
     m_elem_plus = (a_plus_dag_b*m_elem_matrix_plus.T + a_plus_b_dag * m_elem_matrix_plus.conj())
@@ -753,7 +789,7 @@ def jaynes_cummings_organic_ldlb_sweep(num_quanta,energy_array,cavity_freq_array
     a_x_to_save[:,:,0] = a_x_init
     for i in range(1,cavity_its):
         print(i)
-        new_jc_h,new_chiral_int = organic_hamiltonian_ldlb_no_vib(num_quanta,energy_array,cavity_freq_array[i],vec_pot,polarization,dipole_matrix,dielectric_params,spectrum,length,omit_zero_state=omit_zero_state,mueller_correction=mueller_correction,brown_style=brown_style,interaction_mask=interaction_mask,to_counter_rotate=to_counter_rotate)
+        new_jc_h,new_chiral_int = organic_hamiltonian_ldlb_no_vib(num_quanta,energy_array,cavity_freq_array[i],vec_pot,polarization,dipole_matrix,dielectric_params,spectrum,length,omit_zero_state,mueller_correction,brown_style,interaction_mask=interaction_mask,to_counter_rotate=to_counter_rotate)
         chiral_int_set[:,i] = new_chiral_int
         cur_e_x, cur_a_x = base.solve_hamiltonian(new_jc_h.astype(np.csingle)) #type fixing to ensure that there isn't a crash due to typing issues
         e_x_to_save[:,i] = cur_e_x
@@ -832,25 +868,17 @@ def create_organic_tmd_hamiltonian(acd_length,num_quanta,tmd_ex_basis_size,organ
     chiral_int = chiral_factor(a_1, length, cavity_freq, organic_energy_array, dip_mags, dip_angles, w_m_at_cavity_freq, xi,
                                style="full")
     if (mueller_correction):
-        abs_correct, cd_correct = get_mueller_correction(spectrum, cavity_freq, dielectric_params, organic_dipole_matrix,
-                                                         organic_energy_array, length)
-        iso_abs = abs_from_operator(dielectric_params, organic_energy_array, cavity_freq, dip_mags, length=1, separate=True)
-        iso_abs = np.array(iso_abs[:, 0])
-        abs_correct_normed = abs_correct / iso_abs
-        cd_correct_normed = cd_correct / iso_abs
-    else:
-        abs_correct_normed, cd_correct_normed = 0, 0
+        warnings.warn("Mueller correct not supported--set to 0")
     if (interaction_mask is None):
         int_mask = np.ones(np.size(organic_energy_array))
     else:
         int_mask = interaction_mask
     # minus is lhp, plus is rhp
+    '''WHY FLIPPED CONVENTION: RECALL THAT POLARIZATION \pm CONVENTION IS FLIPPED FOR TMDS VS ACD'''
     m_nm_fit_param = n_el #n_el as in (4) in Latini et al 2019 https://pubs.acs.org/doi/pdf/10.1021/acs.nanolett.9b00183
-    acd_m_elem_array_plus = organic_excitonic_array(organic_energy_array, dip_mags, chiral_int,
-                                                correction=abs_correct_normed + cd_correct_normed,
+    acd_m_elem_array_plus = organic_excitonic_array(organic_energy_array, dip_mags, -1*chiral_int,
                                                 interaction_mask=int_mask)  # LHP
-    acd_m_elem_array_minus = organic_excitonic_array(organic_energy_array, dip_mags, -1*chiral_int,
-                                                 correction=abs_correct_normed - cd_correct_normed,
+    acd_m_elem_array_minus = organic_excitonic_array(organic_energy_array, dip_mags, chiral_int,
                                                  interaction_mask=int_mask)  # RHP
     m_0n_plus_up, m_0n_minus_up, m_0n_x_up, m_0n_plus_down, m_0n_minus_down, m_0n_x_down,\
      m_nm_plus_up, m_nm_minus_up, m_nm_x_up, m_nm_plus_down, m_nm_minus_down, m_nm_x_down= \
@@ -865,6 +893,7 @@ def create_organic_tmd_hamiltonian(acd_length,num_quanta,tmd_ex_basis_size,organ
     acd_m_elem_matrix_plus = interaction_array_to_matrices(acd_basis, acd_m_elem_array_plus)
     acd_m_elem_matrix_minus = interaction_array_to_matrices(acd_basis, acd_m_elem_array_minus)
     m_e = 5.10999e5  # ev/c**2
+    #note: elem_charge = 1
     m_elem_matrix_plus = acd_m_elem_matrix_plus.T*acd_tmd_vec_pot_ratio+ tmd_m_elem_matrix_plus/m_e
     m_elem_matrix_minus = acd_m_elem_matrix_minus.T*acd_tmd_vec_pot_ratio+ tmd_m_elem_matrix_minus/m_e
     m_elem_matrix_x = acd_tmd_vec_pot_ratio/np.sqrt(2)*(acd_m_elem_matrix_plus+acd_m_elem_matrix_minus).T+tmd_m_elem_matrix_x/m_e
@@ -1128,11 +1157,11 @@ def basis_weighting(full_basis,index,boolean_weighting = False,elec_style = Fals
 
 
 #plus index, minus index in terms of basis
-def helicity_from_eigenvecs(eigenvecs,full_basis,plus_index,minus_index,sign_convention = "default"):
+def helicity_from_eigenvecs(eigenvecs,full_basis,plus_index,minus_index,sign_convention = "default",singularity_avoidance_factor = 1e-10):
     '''
     Note that this form of the helicity varies from -1 to 1, unlike the -2 to 2 convention often encountered
     in the literature (g = 2*(L-R)/(L+R)), instead of g = (L-R)/(L+R). In many plotting routines, this is
-    accounted for by multiplying by 2 if "old_factor=True."
+    accounted for by multiplying by 2 if "old_factor=True"
     :param eigenvecs:
     :param full_basis:
     :param plus_index:
@@ -1153,7 +1182,7 @@ def helicity_from_eigenvecs(eigenvecs,full_basis,plus_index,minus_index,sign_con
         raise ValueError("Eigenvector tensor dimension must be 2 or 3")
     p_plus = np.sum(np.abs(plus_eigenvecs)**2,axis =0)
     p_minus = np.sum(np.abs(minus_eigenvecs)**2,axis = 0)
-    helicity = (p_plus-p_minus)/(p_plus+p_minus)
+    helicity = (p_plus-p_minus)/(p_plus+p_minus+singularity_avoidance_factor)
     if (sign_convention == "flipped"):
         helicity = -1*helicity
     return  helicity
@@ -1413,8 +1442,7 @@ def extract_piecewise_otherwise_solutions(eigen_solutions):
     eigen_energies = list(eigen_solutions.keys())
     solutions = []
     for i in range(0,len(eigen_energies)):
-        piecewise = eigen_energies[i]
-        solutions.append(piecewise.args[1][0])
+        solutions.append(eigen_energies[i].args[1][0])
     return solutions
 
 def produce_two_dipole_eigenvalues():
@@ -1459,7 +1487,6 @@ def solve_mean_interaction_length(spectrum,dielectric_params,energy_array,dip_ma
         polarizance_selected = polarizance_total.select_by_index(i)
         polarizance_tuple = (polarizance_selected,loss)
         roots = sp.fsolve(numeric_mean_int_length,initial_solutions[i],args=polarizance_tuple)
-        #print(str(roots))
         intensity_frac = intensity_fraction(roots[0],polarizance_selected,loss)
         print(str(i)+":"+str(intensity_frac))
         if (.49 <intensity_frac <.51):
@@ -1481,7 +1508,7 @@ def mean_interaction_length(spectrum,dielectric_params,energy_array,dip_mags,dip
     :return:
     '''
     if (dielectric_params.length>= 1.01 or dielectric_params.length<= 0.99):
-        raise ValueError("Dielectric parameters must be length independent, indicated by length = 1")
+        ValueError("Dielectric parameters must be length independent, indicated by length = 1")
     #fully perturbative--the expression in the manuscript
     if (style == "full_anal"):
         dipole_operators = dip_mags #you don't need to account for isotropic averaging as int cos^2(x) = 1/2 for a full cycle as 2k = abs, which cancels out that factor
@@ -1492,7 +1519,7 @@ def mean_interaction_length(spectrum,dielectric_params,energy_array,dip_mags,dip
     elif (style == "full_numeric"):
         mean_int_length = solve_mean_interaction_length(spectrum,dielectric_params,energy_array,dip_mags,dip_angles,loss)
     else:
-        raise ValueError("Style not found")
+        ValueError("Style not found")
     return mean_int_length
 # general, accounts for m00 shift
 def mean_interaction_length_mueller(mueller_matrix):
@@ -1505,7 +1532,7 @@ def mean_interaction_length_mueller(mueller_matrix):
 
 def select_from_energies(value_array,spectrum,energy_array):
     if (np.size(value_array) != np.size(spectrum)):
-        raise ValueError("Spectrum and array must have equal size")
+        ValueError("Spectrum and array must have equal size")
     selected_array = np.zeros(np.size(energy_array),dtype = value_array.dtype)
     if (np.isscalar(energy_array)):
         energy_array = np.array([energy_array])
@@ -1571,3 +1598,43 @@ def round_trip_loss(q_factor,mode_number = 1):
     :return:
     '''
     return 2 * np.pi * mode_number / q_factor
+
+
+
+class Dielectric_Simulation_Params:
+    def __init__(self,dielectric_params,dipole_matrix,energy_array,loss):
+        self.dielectric_params = dielectric_params
+        self.dipole_matrix = dipole_matrix
+        self.energy_array = energy_array
+        self.loss = loss
+    def create_dict(self):
+        return {"dielectric_params":self.dielectric_params,"dipole_matrix":self.dipole_matrix,"energy_array":self.energy_array,"loss":self.loss}
+
+class TMD_Simulation_Params:
+    def __init__(self,tmd_object,resolution,basis_size,trunc_radius):
+        self.tmd_object = tmd_object
+        self.resolution = resolution
+        self.basis_size = basis_size
+        self.trunc_radius = trunc_radius
+    def create_dict(self):
+        return {"tmd_object":self.tmd_object,"resolution":self.resolution,"basis_size":self.basis_size,"trunc_radius":self.trunc_radius}
+
+class LDLB_JC_Simulation:
+    def __init__(self,cav_freq_array,spectrum,vec_potential,polarization,acd_tmd_ratio,dielectric_sim_params,tmd_sim_params):
+        self.cav_freq_array = cav_freq_array
+        self.spectrum = spectrum
+        self.vec_potential = vec_potential
+        self.polarization = polarization
+        self.acd_tmd_ratio = acd_tmd_ratio
+        self.dielectric_sim_params = dielectric_sim_params
+        self.tmd_sim_params = tmd_sim_params
+    def create_dict(self):
+        base_dict = {"cav_freq_array":self.cav_freq_array,"spectrum":self.spectrum,"vec_potential":self.vec_potential,"polarization":self.polarization,"acd_tmd_ratio":self.acd_tmd_ratio}
+        dielectric_dict = self.dielectric_sim_params.create_dict()
+        tmd_dict = self.tmd_sim_params.create_dict()
+        full_dict = base_dict.copy()
+        full_dict.update(dielectric_dict)
+        full_dict.update(tmd_dict)
+        return full_dict
+def create_yaml(dict,folder_path="",file_name = "ldlb_jc_sim_params"):
+    return yaml.dump(dict, open(os.sep.join((folder_path,file_name)),"w"))
