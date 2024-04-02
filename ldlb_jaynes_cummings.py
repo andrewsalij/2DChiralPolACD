@@ -767,7 +767,7 @@ def organic_hamiltonian_ldlb_no_vib(num_quanta,energy_array,cavity_freq,vec_pot,
         m_elem_plus = m_elem_plus+(a_plus_b * m_elem_matrix_plus.T + a_plus_dag_b_dag * m_elem_matrix_plus.conj())
         m_elem_minus = m_elem_minus+(a_minus_b * m_elem_matrix_minus.T + a_minus_dag_b_dag * m_elem_matrix_minus.conj())
     jc_h = jc_h + (a0_plus* m_elem_plus + a0_minus * m_elem_minus)
-    net_int_perturbation = chiral_int+cd_correct_normed+abs_correct_normed
+    net_int_perturbation = chiral_int
     return jc_h, net_int_perturbation
 
 def jaynes_cummings_organic_alter_fast(jc_h,full_basis,cav_freq,energy_array):
@@ -905,7 +905,7 @@ def create_organic_tmd_hamiltonian(acd_length,num_quanta,tmd_ex_basis_size,organ
     m_elem_matrix_minus = a_minus_dag * m_elem_matrix_minus + a_minus * m_elem_matrix_minus.T.conj()
     a0_plus,a0_minus = a0_plus/resolution_factor,a0_minus/resolution_factor
     jc_h = jc_h + a0_plus * m_elem_matrix_plus + a0_minus * m_elem_matrix_minus
-    net_int_perturbation = chiral_int + cd_correct_normed + abs_correct_normed
+    net_int_perturbation = chiral_int
     end_time = time.time()
     print("took " + str(end_time - start_time) + " seconds")
     return jc_h, net_int_perturbation,m_0n_arrays
