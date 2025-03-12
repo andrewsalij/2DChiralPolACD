@@ -1,0 +1,31 @@
+
+$rem
+JOBTYPE        opt
+METHOD         wB97X-D
+BASIS          6-311G(d,p)
+$end
+
+
+$rem
+METHOD         CAM-B3LYP
+BASIS          def2-TZVPPD
+CIS_N_ROOTS    10
+SOLVENT_METHOD PCM
+SCF_ALGORITHM  DIIS
+SCF_MAX_CYCLES 100
+THRESH         14
+S2THRESH       15
+MEM_TOTAL      100000
+
+
+$end
+
+$pcm
+theory          iefpcm
+method          swig
+printlevel      1
+$end
+
+$solvent
+dielectric 4.81
+$end
